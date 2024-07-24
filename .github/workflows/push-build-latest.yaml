@@ -23,11 +23,11 @@ jobs:
             labels: ${{inputs.runnerLabel}}
         steps:
             # TODO: Figure out how we fetch a PR diff
-            - name: Build and Test actor build
             - uses: actions/checkout@v4
             # A simple node script that converts secrets to env vars
             # Use specific commit SHA to prevent someone stealing that repo
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
-            - run: npm run gha:start:build
+            - name: Build and Test actor build
+              run: npm run gha:start:build
