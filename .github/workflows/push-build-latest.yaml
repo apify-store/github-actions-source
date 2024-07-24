@@ -26,5 +26,4 @@ jobs:
                 env:
                     APIFY_TOKEN_LUKASKRIVKA: ${{ secrets.APIFY_TOKEN_LUKASKRIVKA }}
                     APIFY_TOKEN_APIFY: ${{secrets.APIFY_TOKEN_APIFY}}
-                    SECRETS: ${{secrets}}
                 run: npm run gha:start:build
