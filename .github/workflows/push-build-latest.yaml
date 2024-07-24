@@ -25,7 +25,9 @@ jobs:
             # TODO: Figure out how we fetch a PR diff
             -   uses: actions/checkout@v4
             -   name: Build and Test actor build
-                env:
-                    APIFY_TOKEN_LUKASKRIVKA: ${{ secrets.APIFY_TOKEN_LUKASKRIVKA }}
-                    APIFY_TOKEN_APIFY: ${{secrets.APIFY_TOKEN_APIFY}}
-                run: npm run gha:start:build
+            # A simple node script that converts secrets to env vars
+            # Use specific commit SHA to prevent someone stealing that repo
+            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
+              with:
+                secrets: ${{ toJSON(secrets) }}
+            - run: npm run gha:start:build
