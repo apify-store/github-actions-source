@@ -2,11 +2,16 @@ name: Build latest and report to slack
 
 on:
     workflow_call:
-        secrets:
-            APIFY_TOKEN_LUKASKRIVKA:
-                description: 'A token passed from the caller workflow'
-                required: false
-
+#        secrets:
+#            APIFY_TOKEN_LUKASKRIVKA:
+#                description: 'A token passed from the caller workflow'
+#                required: false
+        inputs:
+            runnerLabel:
+                description: 'prod or beta'
+                type: string
+                default: 'prod'
+                
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -19,6 +24,7 @@ jobs:
           !contains(github.event.head_commit.message, '[skip platform-test]')
 
         runs-on: self-hosted
+            labels: ${{inputs.runnerLabel}}
         steps:
             # TODO: Figure out how we fetch a PR diff
             -   uses: actions/checkout@v4
