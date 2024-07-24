@@ -23,7 +23,7 @@ jobs:
           !contains(github.event.head_commit.message, '[skip ci]') &&
           !contains(github.event.head_commit.message, '[skip platform-test]')
 
-        runs-on: self-hosted
+        runs-on:
             labels: ${{inputs.runnerLabel}}
         steps:
             # TODO: Figure out how we fetch a PR diff
