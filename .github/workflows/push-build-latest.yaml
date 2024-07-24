@@ -2,10 +2,6 @@ name: Build latest and report to slack
 
 on:
     workflow_call:
-#        secrets:
-#            APIFY_TOKEN_LUKASKRIVKA:
-#                description: 'A token passed from the caller workflow'
-#                required: false
         inputs:
             runnerLabel:
                 description: 'prod or beta'
