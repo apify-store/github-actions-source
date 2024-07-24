@@ -1,0 +1,28 @@
+name: Build latest and report to slack
+
+on:
+    workflow_call:
+        secrets:
+            APIFY_TOKEN_LUKASKRIVKA:
+                description: 'A token passed from the caller workflow'
+                required: false
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    pushBuildLatest:
+        name: Build latest and report to slack
+        if: |
+          !contains(github.event.head_commit.message, '[skip ci]') &&
+          !contains(github.event.head_commit.message, '[skip platform-test]')
+
+        runs-on: self-hosted
+        steps:
+            # TODO: Figure out how we fetch a PR diff
+            -   uses: actions/checkout@v4
+            -   name: Build and Test actor build
+                env:
+                    APIFY_TOKEN_LUKASKRIVKA: ${{ secrets.APIFY_TOKEN_LUKASKRIVKA }}
+                run: npm run gha:start:build

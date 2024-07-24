@@ -1,0 +1,30 @@
+name: PR build and test 
+
+on:
+    workflow_call:
+        secrets:
+            APIFY_TOKEN_LUKASKRIVKA:
+                description: 'A token passed from the caller workflow'
+                required: false
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    prBuildAndTest:
+        name: PR build and test 
+        if: |
+          !contains(github.event.head_commit.message, '[skip ci]') &&
+          !contains(github.event.head_commit.message, '[skip platform-test]')
+
+        runs-on: self-hosted
+            
+        steps:
+            -   uses: actions/checkout@v4
+                with:
+                    fetch-depth: 2
+            -   name: Build latest and report to slack
+                env:
+                    APIFY_TOKEN_LUKASKRIVKA: ${{ secrets.APIFY_TOKEN_LUKASKRIVKA }}
+                run: npm run gha:start:build
