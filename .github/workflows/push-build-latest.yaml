@@ -22,7 +22,7 @@ jobs:
         runs-on:
             labels: ${{inputs.runnerLabel}}
         steps:
-            # TODO: Figure out how we fetch a PR diff
+            # We need to fetch at least 2 commits to make a diff for Changelog
             - uses: actions/checkout@v4
               with:
                 fetch-depth: 2
