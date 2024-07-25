@@ -33,7 +33,7 @@ jobs:
                 secrets: ${{ toJSON(secrets) }}
             - name: Build and Test actor build
               run: npm run gha:start:build
-  unitTest:
+    unitTest:
         name: Unit test and lint
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
