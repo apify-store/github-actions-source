@@ -22,7 +22,7 @@ jobs:
         runs-on:
             labels: ${{inputs.runnerLabel}}
         steps:
-            # We need to fetch at least 2 commits to make a diff for Changelog
+            # We need to fetch at least 2 commits to see if we should build and run tests
             - uses: actions/checkout@v4
               with:
                 fetch-depth: 2
