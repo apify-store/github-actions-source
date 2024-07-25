@@ -22,10 +22,10 @@ jobs:
         runs-on:
             labels: ${{inputs.runnerLabel}}
         steps:
-            # We need to fetch at least 2 commits to see if we should build and run tests
+            # We fetch all commits in the PR with the base commit as well
             - uses: actions/checkout@v4
               with:
-                fetch-depth: 2
+                fetch-depth: $(( ${{ github.event.pull_request.commits || 0 }} + 1 ))
             # A simple node script that converts secrets to env vars
             # Use specific commit SHA to prevent someone stealing that repo
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
