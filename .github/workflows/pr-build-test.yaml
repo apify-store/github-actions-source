@@ -23,9 +23,11 @@ jobs:
             labels: ${{inputs.runnerLabel}}
         steps:
             # We fetch all commits in the PR with the base commit as well
+            - name: 'Calculate PR commits + 1'
+              run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
             - uses: actions/checkout@v4
               with:
-                fetch-depth: $(( ${{ github.event.pull_request.commits || 0 }} + 1 ))
+                fetch-depth: ${{ env.PR_FETCH_DEPTH }}
             # A simple node script that converts secrets to env vars
             # Use specific commit SHA to prevent someone stealing that repo
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
