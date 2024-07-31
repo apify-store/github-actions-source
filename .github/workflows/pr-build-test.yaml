@@ -27,6 +27,8 @@ jobs:
               run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
             - uses: actions/checkout@v4
               with:
+                # By default checkout action creates an extra merge commit with the same code that is useless for us
+                ref: ${{ github.event.pull_request.head.sha }}
                 fetch-depth: ${{ env.PR_FETCH_DEPTH }}
             # A simple node script that converts secrets to env vars
             # Use specific commit SHA to prevent someone stealing that repo
