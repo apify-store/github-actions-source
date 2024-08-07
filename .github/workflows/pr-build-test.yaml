@@ -1,4 +1,4 @@
-name: PR -> Built devel and run tests
+name: Test
 on:
     workflow_call:
         inputs:
@@ -12,8 +12,10 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    buildDevelAndTest:
-        name: 'PR -> Build devel and test: ${{github.repository}} ${{github.event.head_commit.message}}'
+    platformTest:
+        # Sadly, dynamic names mess up matching by status check, stupid github
+        # name: 'PR -> Build devel and test: ${{github.repository}} ${{github.event.head_commit.message}}'
+        # 
         # TODO: Improve logic when to run stuff
         #if: |
         #  !contains(github.event.pull_request.message, '[skip ci]') &&
@@ -38,7 +40,6 @@ jobs:
             - name: Build and Test actor build
               run: npm run gha:start:build
     unitTest:
-        name: Unit test and lint
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
         defaults:
