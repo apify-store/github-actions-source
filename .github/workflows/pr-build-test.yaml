@@ -26,7 +26,7 @@ jobs:
         steps:
             # We fetch all commits in the PR with the base commit as well
             - name: 'Calculate PR commits + 1'
-              run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+              run: pwd && ls . && echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
             - uses: actions/checkout@v4
               with:
                 # By default checkout action creates an extra merge commit with the same code that is useless for us
