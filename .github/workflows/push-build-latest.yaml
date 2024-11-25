@@ -32,4 +32,4 @@ jobs:
               with:
                 secrets: ${{ toJSON(secrets) }}
             - name: Build and Test actor build
-              run: npm run gha:start:build
+              run: cd ~ && npm run gha:start:build
