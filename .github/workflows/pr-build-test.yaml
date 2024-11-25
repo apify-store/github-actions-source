@@ -38,7 +38,8 @@ jobs:
               with:
                 secrets: ${{ toJSON(secrets) }}
             - name: Build and Test actor build
-              run:  pwd && ls . && ls .. && npm run gha:start:build
+              # Actions send us to GITHUB_WORKSPACE directory but our runner code is still in home
+              run:  cd ~ && npm run gha:start:build
     unitTest:
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
