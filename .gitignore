@@ -1,0 +1,8 @@
+storage
+node_modules
+.venv
+
+# local-clone is when you test the workflow locally
+local-clone
+
+# Unlike most repos, we need /dist to be commited so GitHub actions can run without need to compile
