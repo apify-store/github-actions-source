@@ -1,11 +1,5 @@
 name: Test
-on:
-    workflow_call:
-        inputs:
-            runnerLabel:
-                description: 'prod or beta'
-                type: string
-                default: 'prod'
+on: workflow_call
                 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,8 +15,7 @@ jobs:
         #  !contains(github.event.pull_request.message, '[skip ci]') &&
         #  !contains(github.event.head_commit.message, '[skip platform-test]')
 
-        runs-on:
-            labels: ${{inputs.runnerLabel}}
+        runs-on: ubuntu-latest
         steps:
             # We fetch all commits in the PR with the base commit as well
             - name: 'Calculate PR commits + 1'

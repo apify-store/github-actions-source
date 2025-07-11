@@ -1,12 +1,6 @@
 name: Build latest and report to slack
 
-on:
-    workflow_call:
-        inputs:
-            runnerLabel:
-                description: 'prod or beta'
-                type: string
-                default: 'prod'
+on: workflow_call
                 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,8 +13,8 @@ jobs:
           !contains(github.event.head_commit.message, '[skip ci]') &&
           !contains(github.event.head_commit.message, '[skip platform-test]')
 
-        runs-on:
-            labels: ${{inputs.runnerLabel}}
+        runs-on: ubuntu-latest
+            
         steps:
             -   name: Use Node.js 20
                 uses: actions/setup-node@v3
