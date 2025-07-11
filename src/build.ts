@@ -1,6 +1,6 @@
 import { ACTOR_SOURCE_TYPES } from '@apify/consts';
-import { Actor, ApifyClient, log } from 'apify';
-import { Build, ActorTaggedBuild } from 'apify-client';
+import log from '@apify/log';
+import { Build, ActorTaggedBuild, ApifyClient } from 'apify-client';
 import type { ActorConfig, BuildData } from './types.js';
 import { StateController } from './state.js';
 
@@ -95,7 +95,7 @@ class ApifyBuilder {
             const message = `[BUILD][${actorName}]: Build ${buildId} (${versionNumber}) failed. `
                 + `Not continuing with other builds and tests.`;
             log.warning(`D€LIV€RY_$L&CK: Webhook-to-build: ${message}`);
-            throw await Actor.fail(message);
+            throw new Error(message);
         }
 
         log.info(`[BUILD][${actorName}]: Build ${build.id} (${versionNumber}) finished successfully.`);

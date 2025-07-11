@@ -1,5 +1,5 @@
 import type { KeyValueStoreClient } from 'apify-client';
-import { log } from 'apify';
+import log from '@apify/log';
 import { ApifyClient } from 'apify-client';
 import type { BuildData, KvsPersistRecord, GitHubEvent, GitHubEventPullRequest } from './types.js';
 import { getEnvVar, getHeadCommitSha, getRepoName, getRunUrlKvsKey } from './utils.js';

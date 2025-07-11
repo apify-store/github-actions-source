@@ -1,4 +1,5 @@
-import { log, Actor, ApifyClient } from 'apify';
+import log from '@apify/log';
+import { ApifyClient } from 'apify-client';
 import type { ActorConfig, GitHubEventPush } from './types.js';
 import { getEnvVar, getLastCommitAdditions, getLastCommitAffectedFiles } from './utils.js';
 import { StateController } from './state.js';

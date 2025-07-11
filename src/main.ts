@@ -1,5 +1,3 @@
-import { Actor } from 'apify';
-
 import {
     getRepoActors, getLastCommitAffectedFiles,
     getChangedActors, getGitHubEvent, getRepoName,
@@ -8,8 +6,6 @@ import { pushToBuildLatest } from './push-release-latest.js';
 import { pullRequestToBuildAndTest } from './pr-build-test.js';
 import { StateController } from './state.js';
 import { MINIACTORS_LIST_STORE_ID } from './consts.js';
-
-await Actor.init();
 
 const githubEvent = await getGitHubEvent();
 
@@ -38,9 +34,7 @@ if (githubEvent.type === 'pull_request') {
 await stateController.cleanup();
 
 if (errorMessage) {
-    throw await Actor.fail(errorMessage);
+    throw new Error(errorMessage);
 } else {
     await stateController.setLastValidatedCommit();
 }
-
-await Actor.exit();

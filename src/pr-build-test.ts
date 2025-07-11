@@ -1,4 +1,4 @@
-import { log } from 'apify';
+import log from '@apify/log';
 import { ActorRun } from 'apify-client';
 
 import type { BuildData } from './types.js';

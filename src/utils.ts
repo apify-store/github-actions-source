@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { log, Actor } from 'apify';
+import log from '@apify/log';
 import { spawnSync } from 'node:child_process';
 import type { ActorConfig, GitHubHeadCommit, BuildData, GitHubEvent, GitHubEventPullRequest, GitHubEventPush, RawGitHubEvent } from './types.js';
 
@@ -68,7 +68,13 @@ export const getGitHubEvent = async () => {
         githubEvent = parseGitHubEvent(rawGitHubEvent);
     } else {
         // Running locally outside of GitHub Actions
-        const maybeRawGithubEvent = await Actor.getInput<GitHubEvent>();
+        const input = await fs.readFile('storage/key_value_stores/default/INPUT.json', 'utf-8')
+        let maybeRawGithubEvent: RawGitHubEvent | undefined;
+        try {
+            maybeRawGithubEvent = JSON.parse(input);
+        } catch (err) {
+            throw new Error(`Failed to parse INPUT.json with error: ${err}`);
+        }
         if (maybeRawGithubEvent && maybeRawGithubEvent.repository) {
             githubEvent = parseGitHubEvent(maybeRawGithubEvent);
         } else {
@@ -78,13 +84,6 @@ export const getGitHubEvent = async () => {
         // Clone trigerring locally repo to mimic Checkout action
         await checkoutRepoLocally(githubEvent);
     }
-
-    // For analysis what events are currently running, this is not read programmatically
-    // TODO: Doesn't see the token, need to fix
-
-    // Actor.apifyClient.token = getEnvVar('TESTER_APIFY_TOKEN');
-    // await Actor.setValue('GITHUB-EVENT-LAST', githubEvent);
-    // await Actor.setValue(`GITHUB-EVENT-${githubEvent.repository.name}-${new Date().toISOString().replace(/:/g, '-')}`, githubEvent);
 
     return githubEvent;
 };

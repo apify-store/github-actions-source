@@ -8,7 +8,7 @@
     },
     "dependencies": {
         "@apify/consts": "^2.26.0",
-        "apify": "^3.1.10",
+        "@apify/log": "^2.5.20",
         "apify-client": "^2.9.3"
     },
     "devDependencies": {
@@ -23,9 +23,8 @@
     },
     "scripts": {
         "start": "npm run start:dev",
-        "gha:start:build": "node dist/main.js",
         "start:dev": "GITHUB_WORKSPACE=local-clone tsx src/main.ts",
-        "start:runner": "node dist/runner.js",
+        "start:action": "node dist/main.js",
         "build": "tsc",
         "lint": "eslint ./src --ext .ts",
         "lint:fix": "eslint ./src --ext .ts --fix",
