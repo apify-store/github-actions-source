@@ -22,6 +22,17 @@ jobs:
         runs-on:
             labels: ${{inputs.runnerLabel}}
         steps:
+            -   name: Use Node.js 20
+                uses: actions/setup-node@v3
+                
+                with:
+                    node-version: 20
+
+            -   name: Install Dependencies
+                run: npm ci
+
+            -   name: TypeScript
+                run: npx tsc
             # We need to fetch at least 2 commits to make a diff for Changelog
             - uses: actions/checkout@v4
               with:
@@ -32,4 +43,4 @@ jobs:
               with:
                 secrets: ${{ toJSON(secrets) }}
             - name: Build and Test actor build
-              run: cd ~ && npm run gha:start:build
+              run: npm run start:action

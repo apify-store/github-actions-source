@@ -107,8 +107,8 @@ class ApifyBuilder {
     */
     static fromActorName = (actorName: string): ApifyBuilder => {
         const username = actorName.split('/')[0];
-        // GitHib secrets only allow word characters (alphanum + underscore)
-        const usernameInGitHubSecretsFormat = username.replaceAll(/\W/g, '_').toUpperCase();
+        // GitHub secrets only allow word characters (alphanum + underscore)
+        const usernameInGitHubSecretsFormat = username.replace(/\W/g, '_').toUpperCase();
         const usernameEnvVar = `APIFY_TOKEN_${usernameInGitHubSecretsFormat}`;
         const token = process.env[usernameEnvVar];
         if (!token) {

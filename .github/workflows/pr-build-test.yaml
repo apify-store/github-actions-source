@@ -27,6 +27,17 @@ jobs:
             # We fetch all commits in the PR with the base commit as well
             - name: 'Calculate PR commits + 1'
               run: echo "Root files" && ls / && echo "home files" && ls ~ && echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+            -   name: Use Node.js 20
+                uses: actions/setup-node@v3
+                
+                with:
+                    node-version: 20
+
+            -   name: Install Dependencies
+                run: npm ci
+
+            -   name: TypeScript
+                run: npx tsc
             - uses: actions/checkout@v4
               with:
                 # By default checkout action creates an extra merge commit with the same code that is useless for us
@@ -39,7 +50,7 @@ jobs:
                 secrets: ${{ toJSON(secrets) }}
             - name: Build and Test actor build
               # Actions send us to GITHUB_WORKSPACE directory but our runner code is still in home
-              run:  cd ~ && npm run gha:start:build
+              run:  npm run start:action
     unitTest:
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
