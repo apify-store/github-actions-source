@@ -20,16 +20,18 @@
         "eslint": "^8.50.0",
         "tsx": "^4.19.2",
         "typescript": "^5.7",
-        "vitest": "^2.1.5"
+        "vitest": "^2.1.5",
+        "husky": "^9.0.11"
     },
     "scripts": {
         "start": "npm run start:dev",
         "start:dev": "GITHUB_WORKSPACE=local-clone tsx src/main.ts",
         "start:action": "node dist/main.js",
-        "build": "tsc",
+        "build": "ncc build src/main.ts --out dist --source-map --minify",
         "lint": "eslint ./src --ext .ts",
         "lint:fix": "eslint ./src --ext .ts --fix",
-        "test": "vitest run"
+        "test": "vitest run",
+        "prepare": "husky"
     },
     "author": "It's not you it's me",
     "license": "ISC"
