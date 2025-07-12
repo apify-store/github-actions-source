@@ -39,7 +39,7 @@ jobs:
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
-            - uses: apify-store/github-actions-source@runner-in-action
+            - uses: apify-store/github-actions-source@feat/runner-in-action
     unitTest:
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
