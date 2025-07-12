@@ -14652,19 +14652,6 @@ const pushToBuildLatest = async (actorConfigs, stateController) => {
 
 
 
-const generatePersistGitHubUrl = () => {
-    // Local emulation
-    if (!process.env.GITHUB_API_URL) {
-        return { runUrl: 'dummy', runKey: 'dummy' };
-    }
-    const githubApiUrl = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getEnvVar */ .lh)('GITHUB_API_URL');
-    const githubRepository = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getEnvVar */ .lh)('GITHUB_REPOSITORY');
-    const githubRunId = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getEnvVar */ .lh)('GITHUB_RUN_ID');
-    const githubRunnerName = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getEnvVar */ .lh)('RUNNER_NAME');
-    const runUrl = `${githubApiUrl}/repos/${githubRepository}/actions/runs/${githubRunId}`;
-    const runKey = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getRunUrlKvsKey */ .kf)(githubRunnerName);
-    return { runUrl, runKey };
-};
 const generateStateRecordKey = (githubEvent) => {
     const sanitizedName = githubEvent.repository.full_name.replace('/', '-');
     const sha = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getHeadCommitSha */ .a5)(githubEvent);
@@ -14687,15 +14674,10 @@ class StateController {
         const testApifyClient = new apify_client__WEBPACK_IMPORTED_MODULE_1__/* .ApifyClient */ .rj({ token: testApifyToken });
         // Initialize client for Testing admin account
         const persistKvClient = testApifyClient.keyValueStore(_consts_js__WEBPACK_IMPORTED_MODULE_3__/* .PERSISTED_GH_JOBS_KVS_ID */ .Ko);
-        // Runner is able to pick up the job from KVS
-        const { runKey, runUrl } = generatePersistGitHubUrl();
         const stateRecordKeys = {
-            runnerAction: runKey,
             perCommitBuildTest: generateStateRecordKey(githubEvent),
             perPRLastValidatedCommit: githubEvent.type === 'pull_request' ? `${(0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getRepoName */ .oj)(githubEvent)}-PR-${githubEvent.pull_request.number}` : null,
         };
-        _apify_log__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Ay.info(`[RUNNER] storing rerun url in KVS... ${stateRecordKeys.runnerAction} = ${runUrl}`);
-        await persistKvClient.setRecord({ key: stateRecordKeys.runnerAction, value: runUrl });
         // Had trouble making the types work here
         const previousState = (await persistKvClient.getRecord(stateRecordKeys.perCommitBuildTest))?.value;
         const buildTestState = previousState ?? { builds: {}, testRuns: {} };
@@ -14729,8 +14711,6 @@ class StateController {
     // But builds are bound to a commit so we want to keep them
     cleanup = async () => {
         await this.clearTests();
-        _apify_log__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Ay.info(`Finished... deleting run url from KVS... ${this.stateRecordKeys.runnerAction}`);
-        await this.persistKvClient.deleteRecord(this.stateRecordKeys.runnerAction);
     };
     getLastValidatedCommit = async () => {
         // Check that what was the last commit where our test succeeded, we will diff files vs that
@@ -14776,8 +14756,7 @@ __nccwpck_require__.d(__webpack_exports__, {
   FP: () => (/* binding */ getLastCommitAdditions),
   DT: () => (/* binding */ getLastCommitAffectedFiles),
   vJ: () => (/* binding */ getRepoActors),
-  oj: () => (/* binding */ getRepoName),
-  kf: () => (/* binding */ getRunUrlKvsKey)
+  oj: () => (/* binding */ getRepoName)
 });
 
 // UNUSED EXPORTS: checkoutRepoLocally, deduplicateConfigs, getCommitFolderNames, isMasterBranch, spawnCommandInGhWorkspace
@@ -14903,9 +14882,6 @@ const getEnvVar = (varName, defaultValue) => {
         throw new Error(`${varName} not defined`);
     }
     return value;
-};
-const getRunUrlKvsKey = (runnerName) => {
-    return `RUN_URL-${runnerName}`;
 };
 /**
  * We provide a mapping of actor names and IDs to build numbers
