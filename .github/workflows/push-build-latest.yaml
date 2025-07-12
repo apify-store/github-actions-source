@@ -24,25 +24,11 @@ jobs:
         runs-on: ubuntu-latest
             
         steps:
-            -   name: Use Node.js 20
-                uses: actions/setup-node@v3
-                
-                with:
-                    node-version: 20
-
-            -   name: Install Dependencies
-                run: npm install
-
-            -   name: TypeScript
-                run: npx tsc
             # We need to fetch at least 2 commits to make a diff for Changelog
             - uses: actions/checkout@v4
               with:
                 fetch-depth: 2
-            # A simple node script that converts secrets to env vars
-            # Use specific commit SHA to prevent someone stealing that repo
-            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-              with:
-                secrets: ${{ toJSON(secrets) }}
-            - name: Build and Test actor build
-              run: npm run start:action
+            - uses: apify-store/github-actions-source@feat/runner-in-action
+              env: 
+                # A bit hacky way to pass secrets to the action
+                ALL_TOKENS_JSON: ${{ toJSON(secrets) }}

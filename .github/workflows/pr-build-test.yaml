@@ -34,13 +34,9 @@ jobs:
                 # By default checkout action creates an extra merge commit with the same code that is useless for us
                 ref: ${{ github.event.pull_request.head.sha }}
                 fetch-depth: ${{ env.PR_FETCH_DEPTH }}
-            # A simple node script that converts secrets to env vars
-            # Use specific commit SHA to prevent someone stealing that repo
-            # - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-            #   with:
-            #     secrets: ${{ toJSON(secrets) }}
             - uses: apify-store/github-actions-source@feat/runner-in-action
               env: 
+                # A bit hacky way to pass secrets to the action
                 ALL_TOKENS_JSON: ${{ toJSON(secrets) }}
     unitTest:
         # TODO: only run on changes to code
