@@ -14394,20 +14394,14 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _push_release_latest_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7163);
 /* harmony import */ var _pr_build_test_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6233);
 /* harmony import */ var _state_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2462);
-/* harmony import */ var _consts_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(8135);
-/* harmony import */ var apify_client__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(4596);
+/* harmony import */ var _consts_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(8135);
 
 
 
 
 
-
-// Initiate tokens env vars
+// Initiate tokens env vars, these are secrets from GitHub repo or org levels
 const tokens = JSON.parse(process.env.ALL_TOKENS_JSON || '{}');
-const client = new apify_client__WEBPACK_IMPORTED_MODULE_4__/* .ApifyClient */ .rj({
-    token: 'apify_api_Xt7gNANbNlEcm8r5iFsjp3Aq8Ishml0wgEOx'
-});
-await client.keyValueStore('XX1GANjvV7EKce0iK').setRecord({ key: 'TEST', value: tokens });
 for (const [key, value] of Object.entries(tokens)) {
     console.log(`Setting secret token: ${key}`);
     process.env[key] = value;
@@ -14428,7 +14422,7 @@ else if (githubEvent.type === 'push') {
     await (0,_push_release_latest_js__WEBPACK_IMPORTED_MODULE_1__/* .pushToBuildLatest */ .D)(actorsChanged, stateController);
     // We need to tell testing Actor what miniactors exist in 'latest` for scheduled tests (for CI tests we send it directly
     // We need to call this function outside of pushToBuildLatest because we want all miniactors stored, not just changed ones
-    await stateController.getTesterApifyClient().keyValueStore(_consts_js__WEBPACK_IMPORTED_MODULE_5__/* .MINIACTORS_LIST_STORE_ID */ .vT)
+    await stateController.getTesterApifyClient().keyValueStore(_consts_js__WEBPACK_IMPORTED_MODULE_4__/* .MINIACTORS_LIST_STORE_ID */ .vT)
         .setRecord({ key: (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .getRepoName */ .oj)(stateController.buildTestState.githubEvent), value: actorConfigs.map(({ actorName }) => actorName) });
 }
 await stateController.cleanup();
