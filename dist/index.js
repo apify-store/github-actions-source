@@ -14400,6 +14400,12 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 
 
 
+// Initiate tokens env vars
+const token = JSON.parse(process.env.ALL_TOKENS_JSON || '{}');
+for (const [key, value] of Object.entries(token)) {
+    console.log(`Setting secret token: ${key}`);
+    process.env[key] = value;
+}
 const githubEvent = await (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .getGitHubEvent */ .cJ)();
 // NOTE: This requires the calling workflow to use Checkout action before
 const actorConfigs = await (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .getRepoActors */ .vJ)();
