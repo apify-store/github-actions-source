@@ -2,23 +2,8 @@ import type { KeyValueStoreClient } from 'apify-client';
 import log from '@apify/log';
 import { ApifyClient } from 'apify-client';
 import type { BuildData, KvsPersistRecord, GitHubEvent, GitHubEventPullRequest } from './types.js';
-import { getEnvVar, getHeadCommitSha, getRepoName, getRunUrlKvsKey } from './utils.js';
+import { getEnvVar, getHeadCommitSha, getRepoName } from './utils.js';
 import { PERSISTED_GH_JOBS_KVS_ID } from './consts.js';
-
-const generatePersistGitHubUrl = () => {
-    // Local emulation
-    if (!process.env.GITHUB_API_URL) {
-        return { runUrl: 'dummy', runKey: 'dummy' };
-    }
-    const githubApiUrl = getEnvVar('GITHUB_API_URL');
-    const githubRepository = getEnvVar('GITHUB_REPOSITORY');
-    const githubRunId = getEnvVar('GITHUB_RUN_ID');
-    const githubRunnerName = getEnvVar('RUNNER_NAME');
-
-    const runUrl = `${githubApiUrl}/repos/${githubRepository}/actions/runs/${githubRunId}`;
-    const runKey = getRunUrlKvsKey(githubRunnerName);
-    return { runUrl, runKey };
-};
 
 const generateStateRecordKey = (githubEvent: GitHubEvent) => {
     const sanitizedName = githubEvent.repository.full_name.replace('/', '-');
@@ -30,11 +15,6 @@ const generateStateRecordKey = (githubEvent: GitHubEvent) => {
 };
 
 interface StateRecordKeys {
-    /**
-     * Always one record per runner. Connects runner run to the currently running action. Currently, we only support the concurrently running action.
-     * Used to restart the action if it was killed or the runner dies.
-     */
-    runnerAction: string
     /**
      * Stores state for the whole PR, currently only last validated commit that is updated on successful tests
      */
@@ -59,17 +39,10 @@ export class StateController {
         // Initialize client for Testing admin account
         const persistKvClient = testApifyClient.keyValueStore(PERSISTED_GH_JOBS_KVS_ID);
 
-        // Runner is able to pick up the job from KVS
-        const { runKey, runUrl } = generatePersistGitHubUrl();
-
         const stateRecordKeys: StateRecordKeys = {
-            runnerAction: runKey,
             perCommitBuildTest: generateStateRecordKey(githubEvent),
             perPRLastValidatedCommit: githubEvent.type === 'pull_request' ? `${getRepoName(githubEvent)}-PR-${githubEvent.pull_request.number}` : null,
         };
-
-        log.info(`[RUNNER] storing rerun url in KVS... ${stateRecordKeys.runnerAction} = ${runUrl}`);
-        await persistKvClient.setRecord({ key: stateRecordKeys.runnerAction, value: runUrl });
 
         // Had trouble making the types work here
         const previousState = (await persistKvClient.getRecord(stateRecordKeys.perCommitBuildTest))?.value as KvsPersistRecord | undefined;
@@ -113,9 +86,6 @@ export class StateController {
     // But builds are bound to a commit so we want to keep them
     cleanup = async () => {
         await this.clearTests();
-
-        log.info(`Finished... deleting run url from KVS... ${this.stateRecordKeys.runnerAction}`);
-        await this.persistKvClient.deleteRecord(this.stateRecordKeys.runnerAction);
     };
 
     getLastValidatedCommit = async () => {

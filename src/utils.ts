@@ -126,10 +126,6 @@ export const getEnvVar = (varName: string, defaultValue?: string): string => {
     return value;
 };
 
-export const getRunUrlKvsKey = (runnerName: string) => {
-    return `RUN_URL-${runnerName}`;
-};
-
 /**
  * We provide a mapping of actor names and IDs to build numbers
  * The testing Actor then matches the run from test (which can be by name or ID) to a build number to be run
