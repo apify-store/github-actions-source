@@ -1,0 +1,38 @@
+{
+    "name": "crawlee-cheerio-typescript",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "This is a boilerplate of an Apify actor.",
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "dependencies": {
+        "@apify/consts": "^2.26.0",
+        "@apify/log": "^2.5.20",
+        "apify-client": "^2.9.3"
+    },
+    "devDependencies": {
+        "@vercel/ncc": "^0.38.3",
+        "@apify/eslint-config-ts": "^0.3.0",
+        "@apify/tsconfig": "^0.1.0",
+        "@typescript-eslint/eslint-plugin": "^6.7.2",
+        "@typescript-eslint/parser": "^6.7.2",
+        "eslint": "^8.50.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7",
+        "vitest": "^2.1.5",
+        "husky": "^9.0.11"
+    },
+    "scripts": {
+        "start": "npm run start:dev",
+        "start:dev": "GITHUB_WORKSPACE=local-clone tsx src/main.ts",
+        "start:action": "node dist/main.js",
+        "build": "ncc build src/main.ts --out dist --source-map --minify",
+        "lint": "eslint ./src --ext .ts",
+        "lint:fix": "eslint ./src --ext .ts --fix",
+        "test": "vitest run",
+        "prepare": "husky"
+    },
+    "author": "It's not you it's me",
+    "license": "ISC"
+}

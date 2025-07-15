@@ -1,0 +1,4 @@
+name: "Store build, test & deploy action"
+runs:
+  using: "node20"
+  main: "dist/index.js"
