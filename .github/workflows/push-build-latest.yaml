@@ -9,10 +9,6 @@ on:
                 description: 'prod or beta'
                 type: string
                 default: 'prod'
-                
-concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
 
 jobs:
     pushBuildLatest:
