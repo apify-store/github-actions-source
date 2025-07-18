@@ -2,13 +2,6 @@ name: Build latest and report to slack
 
 on:
     workflow_call:
-        # This doesn't do anything, we just have to keep it for backward compatibility
-        # as passing invalid input crashes the workflow
-        inputs:
-            runnerLabel:
-                description: 'prod or beta'
-                type: string
-                default: 'prod'
 
 jobs:
     pushBuildLatest:
@@ -18,13 +11,17 @@ jobs:
           !contains(github.event.head_commit.message, '[skip platform-test]')
 
         runs-on: ubuntu-latest
-            
+
         steps:
-            # We need to fetch at least 2 commits to make a diff for Changelog
             - uses: actions/checkout@v4
               with:
-                fetch-depth: 2
-            - uses: apify-store/github-actions-source@feat/runner-in-action
-              env: 
-                # A bit hacky way to pass secrets to the action
-                ALL_TOKENS_JSON: ${{ toJSON(secrets) }}
+                fetch-depth: 0
+            # A simple node script that converts secrets to env vars
+            # Use specific commit SHA to prevent someone stealing that repo
+            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
+              with:
+                secrets: ${{ toJSON(secrets) }}
+            - name: Install dependencies
+              run: npm install
+            - name: Build and Test actor build
+              run: npx public-actors-tools release --push-event-path ${{ github.event_path }}
