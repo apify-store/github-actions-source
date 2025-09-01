@@ -35,7 +35,7 @@ jobs:
               id: build
               run: |
                   export base_commit=$(cat base_commit.txt)
-                  actor_builds=$(npx public-actors-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
+                  actor_builds=$(npx apify-test-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
 
             - name: Test
@@ -48,7 +48,7 @@ jobs:
             - name: Cache latest commit
               run: |
                   export base_commit=$(cat base_commit.txt)
-                  npx public-actors-tools get-latest-commit --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo "") > ./base_commit.txt
+                  npx apify-test-tools get-latest-commit --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo "") > ./base_commit.txt
 
     unitTest:
         # TODO: only run on changes to code
