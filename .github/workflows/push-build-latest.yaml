@@ -24,4 +24,4 @@ jobs:
             - name: Install dependencies
               run: npm install
             - name: Build and Test actor build
-              run: npx public-actors-tools release --push-event-path ${{ github.event_path }}
+              run: npx apify-test-tools release --push-event-path ${{ github.event_path }}
