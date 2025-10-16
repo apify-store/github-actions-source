@@ -53,6 +53,7 @@ jobs:
               working-directory: ${{ env.TEST_DIR }}
 
             - name: Test
+              if: env.TEST_DIR != ''
               run: |
                   export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
                   export RUN_PLATFORM_TESTS=1
