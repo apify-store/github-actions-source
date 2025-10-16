@@ -53,6 +53,8 @@ jobs:
               working-directory: ${{ env.TEST_DIR }}
 
             - name: Test
+              # Skip step when tests are missing to avoid ci failures
+              if: env.TEST_DIR != ''
               run: |
                   export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
                   export RUN_PLATFORM_TESTS=1
@@ -112,5 +114,7 @@ jobs:
                 working-directory: ${{ env.TEST_DIR }}
 
             -   name: Test
+                # Skip step when tests are missing to avoid ci failures
+                if: env.TEST_DIR != ''
                 run: npm test
                 working-directory: ${{ env.TEST_DIR }}
