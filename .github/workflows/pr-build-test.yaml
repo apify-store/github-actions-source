@@ -42,6 +42,7 @@ jobs:
 
             - name: Install dependencies
               run: npm install
+              working-directory: ${{ env.TEST_DIR }}
 
             - name: Build
               id: build
@@ -49,6 +50,7 @@ jobs:
                   export base_commit=$(cat base_commit.txt)
                   actor_builds=$(npx apify-test-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
+              working-directory: ${{ env.TEST_DIR }}
 
             - name: Test
               run: |
