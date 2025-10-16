@@ -17,6 +17,18 @@ jobs:
               with:
                 fetch-depth: 0
 
+            # We want platform tests but some repos that we migrate may not have unit tests or have only standalone-actors
+            -   name: Check if we have tests folder
+                run: |
+                    if [ -d "code/test/platform" ]; then
+                        echo "TEST_DIR=./code" >> $GITHUB_ENV
+                    elif [ -d "test/platform" ]; then
+                        echo "TEST_DIR=." >> $GITHUB_ENV
+                    else
+                        echo "Test folder not found at /test or /code/test. Skipping tests."
+                        exit 0
+                    fi
+
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
@@ -30,6 +42,7 @@ jobs:
 
             - name: Install dependencies
               run: npm install
+              working-directory: ${{ env.TEST_DIR }}
 
             - name: Build
               id: build
@@ -37,12 +50,14 @@ jobs:
                   export base_commit=$(cat base_commit.txt)
                   actor_builds=$(npx apify-test-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
+              working-directory: ${{ env.TEST_DIR }}
 
             - name: Test
               run: |
                   export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
                   export RUN_PLATFORM_TESTS=1
                   npx vitest ./test/platform --run
+              working-directory: ${{ env.TEST_DIR }}
 
             # NOTE: we want to cache the latest commit only if the tests are successfull
             - name: Cache latest commit
