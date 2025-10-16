@@ -113,5 +113,6 @@ jobs:
                 working-directory: ${{ env.TEST_DIR }}
 
             -   name: Test
+                if: env.TEST_DIR != ''
                 run: npm test
                 working-directory: ${{ env.TEST_DIR }}
