@@ -58,7 +58,7 @@ jobs:
               run: |
                   export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
                   export RUN_PLATFORM_TESTS=1
-                  npx vitest ./test/platform --run
+                  npx vitest ./test/platform --run --maxConcurrency 20
               working-directory: ${{ env.TEST_DIR }}
 
             # NOTE: we want to cache the latest commit only if the tests are successfull
