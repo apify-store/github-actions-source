@@ -9,7 +9,6 @@ concurrency:
 
 jobs:
     platformTest:
-        name: Build Devel and Test
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
