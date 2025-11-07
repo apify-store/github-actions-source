@@ -37,7 +37,7 @@ jobs:
                     --outputFile=./test-output.json \
                     --maxConcurrency 20 \
                     --fileParallelism=true \
-                    --maxWorkers 10
+                    --maxWorkers 100
                   return_code=$?
                   npx apify-test-tools report-tests \
                     --report-file ./test-output.json \
