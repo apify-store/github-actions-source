@@ -11,7 +11,7 @@ on:
 jobs:
     platformTestsCore:
         name: Platform tests - Core
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
