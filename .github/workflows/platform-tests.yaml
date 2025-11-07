@@ -30,7 +30,14 @@ jobs:
               run: |
                   set +e
                   export RUN_ALL_PLATFORM_TESTS=1
-                  npx vitest ./test/platform/${{ inputs.subtest }} --run --reporter=default --reporter=json --outputFile=./test-output.json
+                  npx vitest ./test/platform/${{ inputs.subtest }} \
+                    --run \
+                    --reporter=default \
+                    --reporter=json \
+                    --outputFile=./test-output.json \
+                    --maxConcurrency 20 \
+                    --fileParallelism=true \
+                    --maxWorkers 10
                   return_code=$?
                   npx apify-test-tools report-tests \
                     --report-file ./test-output.json \
