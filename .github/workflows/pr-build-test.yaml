@@ -120,7 +120,7 @@ jobs:
 
             -   name: Prettier Check
                 run: |
-                    if npx prettier --version > /dev/null 2>&1; then
+                    if [ npx prettier --version > /dev/null 2>&1 ]; then
                         npx prettier --check .;
                     else
                         echo "Prettier is not installed. Skipping Prettier check.";
@@ -129,7 +129,7 @@ jobs:
 
             -   name: Unused Exports Check
                 run: |
-                    if npx ts-unused-exports --version > /dev/null 2>&1; then
+                    if [ npx ts-unused-exports --version > /dev/null 2>&1 ]; then
                         npx ts-unused-exports ./tsconfig.json;
                     else
                         echo "ts-unused-exports is not installed. Skipping unused exports check.";
