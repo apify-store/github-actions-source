@@ -54,3 +54,4 @@ jobs:
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
                     --repository "${{ github.repository }}"
                   exit $return_code
+              working-directory: ${{ env.SOURCE_DIR }}
