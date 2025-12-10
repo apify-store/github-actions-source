@@ -27,6 +27,8 @@ jobs:
               run: |
                   if [ -f "./code/package.json" ]; then
                     echo "SOURCE_DIR=./code" >> $GITHUB_ENV
+                  else
+                    echo "SOURCE_DIR=." >> $GITHUB_ENV
                   fi
 
             - name: Install dependencies
