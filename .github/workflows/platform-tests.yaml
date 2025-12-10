@@ -22,9 +22,16 @@ jobs:
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
+                
+            - name: Check if we have tests folder
+              run: |
+                  if [ -f "./code/package.json" ]; then
+                    echo "SOURCE_DIR=./code" >> $GITHUB_ENV
+                  fi
 
             - name: Install dependencies
               run: npm install
+              working-directory: ${{ env.SOURCE_DIR }}
 
             - name: Test
               run: |
