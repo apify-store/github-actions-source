@@ -2,31 +2,52 @@ name: Test
 
 on:
     workflow_call:
+        inputs:
+            working-directory:
+                type: string
+                default: .
+                required: false
+            skip-platform-tests:
+                type: boolean
+                default: false
+                required: false
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    platformTest:
+
+    checkTestFolder:
+        if: ${{ !inputs.skip-platform-tests }}
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
+        
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Check for test folder
+              id: check
+              run: |
+                if [ ! -d "test/platform" ]; then
+                    echo "No platform test folder found. Failing the workflow."
+                    exit 1
+                fi
+
+    platformTest:
+        if: ${{ !inputs.skip-platform-tests }}
+        needs: checkTestFolder
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
               with:
                 fetch-depth: 0
-
-            # We want platform tests but some repos that we migrate may not have unit tests or have only standalone-actors
-            -   name: Check if we have tests folder
-                run: |
-                    if [ -d "code/test/platform" ]; then
-                        echo "TEST_DIR=./code" >> $GITHUB_ENV
-                    elif [ -d "test/platform" ]; then
-                        echo "TEST_DIR=." >> $GITHUB_ENV
-                    else
-                        echo "Test folder not found at /test or /code/test. Skipping tests."
-                        exit 0
-                    fi
 
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
@@ -41,7 +62,6 @@ jobs:
 
             - name: Install dependencies
               run: npm install
-              working-directory: ${{ env.TEST_DIR }}
 
             - name: Build
               id: build
@@ -49,16 +69,12 @@ jobs:
                   export base_commit=$(cat base_commit.txt)
                   actor_builds=$(npx apify-test-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
-              working-directory: ${{ env.TEST_DIR }}
 
             - name: Test
-              # Skip step when tests are missing to avoid ci failures
-              if: env.TEST_DIR != ''
               run: |
                   export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
                   export RUN_PLATFORM_TESTS=1
                   npx vitest ./test/platform --run --maxConcurrency 20 --fileParallelism=true --maxWorkers 100
-              working-directory: ${{ env.TEST_DIR }}
 
             # NOTE: we want to cache the latest commit only if the tests are successfull
             - name: Cache latest commit
@@ -69,32 +85,22 @@ jobs:
     unitTest:
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
 
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v4
-            # We want unit tests but some repos that we migrate may not have unit tests or have only standalone-actors
-            -   name: Check if we have tests folder
-                run: |
-                    if [ -d "code/test" ]; then
-                        echo "TEST_DIR=./code" >> $GITHUB_ENV
-                    elif [ -d "test" ]; then
-                        echo "TEST_DIR=." >> $GITHUB_ENV
-                    else
-                        echo "Test folder not found at /test or /code/test. Skipping tests."
-                        exit 0
-                    fi
+                
             -   name: Use Node.js 20
                 uses: actions/setup-node@v3
-
                 with:
                     node-version: 20
                     cache: 'npm'
-                    cache-dependency-path: ${{ env.TEST_DIR }} # https://github.com/actions/setup-node/issues/706
-
+                    cache-dependency-path: ${{ inputs.working-directory }} # https://github.com/actions/setup-node/issues/706
             -   name: Install Dependencies
                 run: npm ci
-                working-directory: ${{ env.TEST_DIR }}
 
             -   name: TypeScript
                 # Some repos require custom build checks, so we check if the `build-check` script exists and run it if 
@@ -106,17 +112,12 @@ jobs:
                     else
                         npm run build-check;
                     fi
-                working-directory: ${{ env.TEST_DIR }}
 
             -   name: Lint
                 run: npm run lint
-                working-directory: ${{ env.TEST_DIR }}
 
             -   name: Test
-                # Skip step when tests are missing to avoid ci failures
-                if: env.TEST_DIR != ''
                 run: npm test
-                working-directory: ${{ env.TEST_DIR }}
 
             -   name: Prettier Check
                 run: |
@@ -125,7 +126,6 @@ jobs:
                     else
                         echo "Prettier is not installed. Skipping Prettier check.";
                     fi
-                working-directory: ${{ env.TEST_DIR }}
 
             -   name: Unused Exports Check
                 run: |
@@ -134,4 +134,3 @@ jobs:
                     else
                         echo "ts-unused-exports is not installed. Skipping unused exports check.";
                     fi
-                working-directory: ${{ env.TEST_DIR }}
