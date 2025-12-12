@@ -2,6 +2,11 @@ name: Build latest and report to slack
 
 on:
     workflow_call:
+        inputs:
+            working-directory:
+                type: string
+                default: .
+                required: false
 
 jobs:
     pushBuildLatest:
@@ -11,6 +16,9 @@ jobs:
           !contains(github.event.head_commit.message, '[skip platform-test]')
 
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
 
         steps:
             - uses: actions/checkout@v4
@@ -22,18 +30,8 @@ jobs:
               with:
                 secrets: ${{ toJSON(secrets) }}
 
-            - name: Check if we have tests folder
-              run: |
-                  if [ -f "./code/package.json" ]; then
-                    echo "SOURCE_DIR=./code" >> $GITHUB_ENV
-                  else
-                    echo "SOURCE_DIR=." >> $GITHUB_ENV
-                  fi
-
             - name: Install dependencies
               run: npm install
-              working-directory: ${{ env.SOURCE_DIR }}
 
             - name: Build and Test actor build
               run: npx apify-test-tools release --push-event-path ${{ github.event_path }}
-              working-directory: ${{ env.SOURCE_DIR }}
