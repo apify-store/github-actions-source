@@ -7,12 +7,19 @@ on:
                 type: string
                 default: ""
                 required: false
+            working-directory:
+                type: string
+                default: .
+                required: false
 
 jobs:
     scheduledPlatformTests:
         name: Scheduled Platform tests
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
@@ -22,18 +29,9 @@ jobs:
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
-                
-            - name: Check if we have tests folder
-              run: |
-                  if [ -f "./code/package.json" ]; then
-                    echo "SOURCE_DIR=./code" >> $GITHUB_ENV
-                  else
-                    echo "SOURCE_DIR=." >> $GITHUB_ENV
-                  fi
 
             - name: Install dependencies
               run: npm install
-              working-directory: ${{ env.SOURCE_DIR }}
 
             - name: Test
               run: |
@@ -50,8 +48,8 @@ jobs:
                   return_code=$?
                   npx apify-test-tools report-tests \
                     --report-file ./test-output.json \
+                    --workspace . \
                     --workflow-name "${{ github.workflow }}" \
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
                     --repository "${{ github.repository }}"
                   exit $return_code
-              working-directory: ${{ env.SOURCE_DIR }}
