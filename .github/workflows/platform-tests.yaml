@@ -53,3 +53,9 @@ jobs:
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
                     --repository "${{ github.repository }}"
                   exit $return_code
+
+            - name: Upload Vitest JSON artifact
+              uses: actions/upload-artifact@v6
+              with:
+                  name: vitest-results
+                  path: ./test-output.json
