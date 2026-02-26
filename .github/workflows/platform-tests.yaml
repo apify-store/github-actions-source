@@ -56,6 +56,7 @@ jobs:
 
             - name: Upload Vitest JSON artifact
               uses: actions/upload-artifact@v6
+              if: always()
               with:
                   name: vitest-results
                   path: ./test-output.json
