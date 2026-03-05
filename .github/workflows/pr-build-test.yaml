@@ -65,7 +65,7 @@ jobs:
               run: npm install
 
             # Consider forcing usage of latest test tools
-            # - name: Install test tools
+            # - name: Enforce latest test tools version
             #   run: npm install apify-test-tools@latest || true 
 
             - name: Build
