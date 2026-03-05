@@ -121,7 +121,7 @@ jobs:
 
             -   name: Prettier Check
                 run: |
-                    if [ npx prettier --version > /dev/null 2>&1 ]; then
+                    if [ -d "node_modules/prettier" ]; then
                         npx prettier --check .;
                     else
                         echo "Prettier is not installed. Skipping Prettier check.";
