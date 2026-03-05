@@ -64,6 +64,10 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            # Consider forcing usage of latest test tools
+            # - name: Install test tools
+            #   run: npm install apify-test-tools@latest || true 
+
             - name: Build
               id: build
               run: |
