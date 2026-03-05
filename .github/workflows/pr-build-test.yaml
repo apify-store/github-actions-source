@@ -121,7 +121,7 @@ jobs:
 
             -   name: Prettier Check
                 run: |
-                    if [ npx prettier --version > /dev/null 2>&1 ]; then
+                    if [ -d "node_modules/prettier" ]; then
                         npx prettier --check .;
                     else
                         echo "Prettier is not installed. Skipping Prettier check.";
@@ -129,8 +129,12 @@ jobs:
 
             -   name: Unused Exports Check
                 run: |
-                    if [ npx ts-unused-exports --version > /dev/null 2>&1 ]; then
+                    if [ -d "node_modules/knip" ]; then  
+                        echo "Knip is installed. Running knip to check for unused exports.";  
+                        npx knip --include exports,types;
+                    elif [ -d "node_modules/ts-unused-exports" ]; then
+                        echo "Knip is not installed, but ts-unused-exports is. Running ts-unused-exports to check for unused exports.";
                         npx ts-unused-exports ./tsconfig.json;
                     else
-                        echo "ts-unused-exports is not installed. Skipping unused exports check.";
+                        echo "knip nor ts-unused-exports are installed. Skipping unused exports check.";
                     fi
