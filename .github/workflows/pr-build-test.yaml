@@ -53,7 +53,7 @@ jobs:
               with:
                 secrets: ${{ toJSON(secrets) }}
 
-            - name: Cache base commit
+            - name: Pick last validated commit from cache
               id: base_commit
               uses: actions/cache@v4
               with:
@@ -67,7 +67,7 @@ jobs:
               id: build
               run: |
                   export base_commit=$(cat base_commit.txt)
-                  echo "Base commit: $base_commit"
+                  echo "Base commit to be used for build & test: $base_commit"
                   actor_builds=$(npx apify-test-tools build --source-branch "origin/${{ github.head_ref }}" --target-branch "origin/${{ github.base_ref }}" $(test $base_commit && echo "--base-commit $base_commit" || echo ""))
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
 
@@ -77,8 +77,8 @@ jobs:
                   export RUN_PLATFORM_TESTS=1
                   npx vitest ./test/platform --run --maxConcurrency 20 --fileParallelism=true --maxWorkers 100
 
-            # NOTE: we want to cache the latest commit only if the tests are successful
-            - name: Cache latest commit
+            # NOTE: This is an optimization that if we did functional changes and later only cosmetic changes (e.g. dev reamde), we will compare changes files only for the last commit. We want to cache the latest commit only if the tests are successful
+            - name: Store last validated commit to cache
               # We only want to store base commit if there were functional changes. If there are no functional changes, not having base commit will allow us to compare branches directly with git diff target_branch...source_branch which can understand that functional changes come from merge commit with target branch. This way we don't have to run tests if we have just readme changes but we need to merge master in. If there were no functional changes, base commit is useless anyway.
               if: steps.build.outputs.actor_builds != '[]'
               run: |
