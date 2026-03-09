@@ -1,12 +1,22 @@
-You should only commit to this repo locally because we rely on pre-commit hook
+## Base GitHub Action workflows
+These workflows are called by the individual workflows in each repository. They are stored here to avoid code duplication and to make it easier to maintain. Ideally, the individual workflows should only call these base workflows and not contain any logic themselves.
 
-## Run locally to test
-1. Choose if you want to emulate PR or push to master workflow.
-2. Copy appropriate example from `./example-github-events` to `INPUT.json`
-3. To mimic actual PR or push you care about, you should update the input
-    - PR: Update `pull_request.head.ref` (source branch of the PR), `repository.full_name`, `pull_request.base.sha`, `pull_request.head.sha`
-    - push: Update `ref`, `repository.full_name`
-4. Start the Actor with `TESTER_APIFY_TOKEN=<TOKEN> APIFY_TOKEN_${username}=<TOKEN> apify run -p` (possibly other apify users as well)
+### Caution
+These workflows are used based on branch code, there is no deployment. So once you merge the code, it will be running in production.
 
-## Testing real Actor
-Do anything to https://github.com/apify-projects/store-testing-repo-for-github
+### Testing
+- You can make arbitrary PRs and merges to https://github.com/apify-store/testing-repo-for-github-actions to see how it triggers the workflows. This testing repo has real attached Actors and tests. 
+- Make sure the shell code actually works as intended on your laptop (sometimes people don't even do that :) ). 
+- After you merge, observe the workflow on real project before moving on.
+
+### Apify test tools
+These workflows depend on https://github.com/apify-projects/apify-test-tools. This includes packages that exposes both CLI used in these workflows and JavaScript library used in each repo to write tests.
+
+### Workflows
+- platform-tests - Scheduled (daily, hourly) tests on latest builds
+- pr-build-test - On PR updates, builds 0.99 versions and tests on them.
+- push-build-latest - This releases master branch to latest Actor version. This almost always happens after PR is merged (since we forbid direct push)
+
+### Possible TODOs
+- Install latest apify-test-tools automatically in this workflow
+- Merge repo with apify-test-tools
