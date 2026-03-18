@@ -64,9 +64,9 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            # Consider forcing usage of latest test tools
-            # - name: Enforce latest test tools version
-            #   run: npm install apify-test-tools@latest || true 
+            # Repos can still have older version locally but on cloud we enforce uniformity
+            - name: Enforce latest test tools version
+              run: npm install apify-test-tools@latest 
 
             - name: Build
               id: build
