@@ -33,6 +33,17 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            # Repos can still have older version locally but on cloud we enforce uniformity
+            - name: Enforce latest test tools version
+              # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
+              run: |
+                  if ! npm list apify-test-tools | grep -q "apify-test-tools@.*-beta"; then
+                    echo "Didn't find beta version, installing latest apify-test-tools"
+                    npm install apify-test-tools@latest;
+                  else
+                    echo "Beta version of apify-test-tools is installed, we assume this is testing the library so we won't update it to latest"
+                  fi
+
             - name: Test
               run: |
                   set +e
