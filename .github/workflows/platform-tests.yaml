@@ -62,7 +62,7 @@ jobs:
                     --workspace . \
                     --workflow-name "${{ github.workflow }}" \
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-                    --repository "${{ github.repository }}"
+                    --report-slack-channel "#notif-$(echo $GITHUB_REPOSITORY | cut -d "/" -f 2)"
                   exit $return_code
 
             - name: Upload Vitest JSON artifact

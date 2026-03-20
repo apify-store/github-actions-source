@@ -45,4 +45,4 @@ jobs:
                   fi
 
             - name: Build and Test actor build
-              run: npx apify-test-tools release --push-event-path ${{ github.event_path }}
+              run: npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actor" --report-slack-channel "#notif-${{ github.event.repository.name }}"
