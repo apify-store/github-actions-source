@@ -58,8 +58,11 @@ jobs:
               uses: actions/cache@v4
               with:
                 # We have to call it base commit for the library but it makes more sense as "last validated commit"
+                # Using run_id ensures the key is always unique so the cache always saves at end-of-job (no "cache hit, not saving" issue)
                 path: ./base_commit.txt
-                key: base_commit
+                key: base_commit-${{ github.run_id }}
+                # This is needed to force overriding the cache with new entry at the end
+                restore-keys: base_commit-
 
             - name: Install dependencies
               run: npm install
