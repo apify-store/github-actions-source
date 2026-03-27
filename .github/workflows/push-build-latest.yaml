@@ -46,3 +46,6 @@ jobs:
 
             - name: Build and Test actor build
               run: npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "#notif-${{ github.event.repository.name }}"
+
+            - name: Delete old builds
+              run: npx apify-test-tools delete-old-builds
