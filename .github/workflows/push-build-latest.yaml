@@ -31,7 +31,7 @@ jobs:
                 secrets: ${{ toJSON(secrets) }}
 
             - name: Install dependencies
-              run: npm install
+              run: npm ci
 
             # Repos can still have older version locally but on cloud we enforce uniformity
             - name: Enforce latest test tools version
