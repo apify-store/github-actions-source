@@ -24,7 +24,7 @@ jobs:
         defaults:
             run:
                 working-directory: ${{ inputs.working-directory }}
-        
+
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -63,6 +63,11 @@ jobs:
                 key: base_commit-${{ github.run_id }}
                 # This is needed to force overriding the cache with new entry at the end
                 restore-keys: base_commit-
+
+            - name: Use Node.js 24
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
 
             - name: Install dependencies
               run: npm ci
@@ -116,18 +121,18 @@ jobs:
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v4
-                
-            -   name: Use Node.js 20
-                uses: actions/setup-node@v3
+
+            -   name: Use Node.js 24
+                uses: actions/setup-node@v4
                 with:
-                    node-version: 20
+                    node-version: 24
                     cache: 'npm'
                     cache-dependency-path: ${{ inputs.working-directory }} # https://github.com/actions/setup-node/issues/706
             -   name: Install Dependencies
                 run: npm ci
 
             -   name: TypeScript
-                # Some repos require custom build checks, so we check if the `build-check` script exists and run it if 
+                # Some repos require custom build checks, so we check if the `build-check` script exists and run it if
                 # it does. Otherwise default to the standard `npx tsc --noEmit` check
                 run: |
                     HAS_CUSTOM_BUILD_CHECK=$(npx -y json -f package.json scripts.build-check)
@@ -153,8 +158,8 @@ jobs:
 
             -   name: Unused Exports Check
                 run: |
-                    if [ -d "node_modules/knip" ]; then  
-                        echo "Knip is installed. Running knip to check for unused exports.";  
+                    if [ -d "node_modules/knip" ]; then
+                        echo "Knip is installed. Running knip to check for unused exports.";
                         npx knip --include exports,types;
                     elif [ -d "node_modules/ts-unused-exports" ]; then
                         echo "Knip is not installed, but ts-unused-exports is. Running ts-unused-exports to check for unused exports.";
