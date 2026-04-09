@@ -21,32 +21,10 @@ jobs:
             run:
                 working-directory: ${{ inputs.working-directory }}
         steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+            - uses: ./.github/actions/setup-apify-test-tools
               with:
-                fetch-depth: 0
-
-            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-              with:
-                secrets: ${{ toJSON(secrets) }}
-
-            - name: Use Node.js 24
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 24
-
-            - name: Install apify-test-tools
-              # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
-              # npm install still tries to respect repo package-lock.json so pulling new malware versions is very unlikely, we don't change dependencies in test-tools often
-              run: |
-                  TEST_TOOLS_VERSION=$(jq -r '(.dependencies // {}) + (.devDependencies // {}) | .["apify-test-tools"] // ""' package.json)
-                  if echo "$TEST_TOOLS_VERSION" | grep -q "\-beta"; then
-                    echo "Beta version ($TEST_TOOLS_VERSION) found in package.json, installing it"
-                    npm install "apify-test-tools@$TEST_TOOLS_VERSION"
-                  else
-                    echo "No beta version in package.json, installing latest apify-test-tools"
-                    npm install apify-test-tools@latest
-                  fi
+                  secrets: ${{ toJSON(secrets) }}
+                  working-directory: ${{ inputs.working-directory }}
 
             - name: Test
               run: |
