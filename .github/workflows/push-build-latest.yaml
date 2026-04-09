@@ -35,18 +35,17 @@ jobs:
               with:
                   node-version: 24
 
-            - name: Install dependencies
-              run: npm ci
-
-            # Repos can still have older version locally but on cloud we enforce uniformity
-            - name: Enforce latest test tools version
+            - name: Install apify-test-tools
               # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
+              # npm install still tries to respect repo package-lock.json so pulling new malware versions is very unlikely, we don't change dependencies in test-tools often
               run: |
-                  if ! npm list apify-test-tools | grep -q "apify-test-tools@.*-beta"; then
-                    echo "Didn't find beta version, installing latest apify-test-tools"
-                    npm install apify-test-tools@latest;
+                  TEST_TOOLS_VERSION=$(jq -r '(.dependencies // {}) + (.devDependencies // {}) | .["apify-test-tools"] // ""' package.json)
+                  if echo "$TEST_TOOLS_VERSION" | grep -q "\-beta"; then
+                    echo "Beta version ($TEST_TOOLS_VERSION) found in package.json, installing it"
+                    npm install "apify-test-tools@$TEST_TOOLS_VERSION"
                   else
-                    echo "Beta version of apify-test-tools is installed, we assume this is testing the library so we won't update it to latest"
+                    echo "No beta version in package.json, installing latest apify-test-tools"
+                    npm install apify-test-tools@latest
                   fi
 
             - name: Build and Test actor build
