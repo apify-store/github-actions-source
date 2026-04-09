@@ -26,11 +26,15 @@ jobs:
               with:
                   fetch-depth: 0
 
+            - name: Get github-actions-source ref
+              id: gha_ref
+              run: echo "ref=${GITHUB_WORKFLOW_REF##*@}" >> $GITHUB_OUTPUT
+
             - name: Checkout github-actions-source
               uses: actions/checkout@v4
               with:
                   repository: apify-store/github-actions-source
-                  ref: ${{ github.workflow_sha }}
+                  ref: ${{ steps.gha_ref.outputs.ref }}
                   path: .__gha-source__
 
             - uses: ./__gha-source__/.github/actions/setup-apify-test-tools
