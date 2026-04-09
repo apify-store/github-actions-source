@@ -12,11 +12,6 @@ inputs:
 runs:
     using: composite
     steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
-          with:
-              fetch-depth: 0
-
         - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
           with:
               secrets: ${{ inputs.secrets }}

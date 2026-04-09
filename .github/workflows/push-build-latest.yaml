@@ -21,7 +21,19 @@ jobs:
                 working-directory: ${{ inputs.working-directory }}
 
         steps:
-            - uses: ./.github/actions/setup-apify-test-tools
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Checkout github-actions-source
+              uses: actions/checkout@v4
+              with:
+                  repository: apify-store/github-actions-source
+                  ref: ${{ github.workflow_sha }}
+                  path: .__gha-source__
+
+            - uses: ./__gha-source__/.github/actions/setup-apify-test-tools
               with:
                   secrets: ${{ toJSON(secrets) }}
                   working-directory: ${{ inputs.working-directory }}
