@@ -49,21 +49,44 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Get github-actions-source ref
-              id: gha_ref
-              run: echo "ref=${GITHUB_WORKFLOW_REF##*@}" >> $GITHUB_OUTPUT
-
-            - name: Checkout github-actions-source
-              uses: actions/checkout@v4
-              with:
-                  repository: apify-store/github-actions-source
-                  ref: ${{ steps.gha_ref.outputs.ref }}
-                  path: .__gha-source__
-
-            - uses: ./__gha-source__/.github/actions/setup-apify-test-tools
+            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                   secrets: ${{ toJSON(secrets) }}
-                  working-directory: ${{ inputs.working-directory }}
+
+            - name: Use Node.js 24
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Install apify-test-tools
+              working-directory: ${{ inputs.working-directory }}
+              run: |
+                  # Check for beta version before removing package.json
+                  # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
+                  TEST_TOOLS_VERSION=$(jq -r '(.dependencies // {}) + (.devDependencies // {}) | .["apify-test-tools"] // ""' package.json)
+
+                  # Hide repo deps - we only need apify-test-tools, not the actor's full dependency tree
+                  mv package.json .package.json.bak
+                  [ -f package-lock.json ] && mv package-lock.json .package-lock.json.bak
+
+                  # Install with age protection to pin transitive deps against supply chain attacks, creates package-lock.json with the full dependency tree
+                  npm config set min-release-age 3
+                  npm install apify-test-tools
+
+                  # Install latest (or beta) on top - transitive deps are already locked above by the package-lock.json
+                  npm config set min-release-age 0
+                  if echo "$TEST_TOOLS_VERSION" | grep -q "\-beta"; then
+                    echo "Beta version ($TEST_TOOLS_VERSION) found in package.json, installing it"
+                    npm install "apify-test-tools@$TEST_TOOLS_VERSION"
+                  else
+                    echo "No beta version in package.json, installing latest apify-test-tools"
+                    npm install apify-test-tools@latest
+                  fi
+
+                  # Restore original package files for consistency for next steps
+                  rm -f package.json package-lock.json
+                  mv .package.json.bak package.json
+                  [ -f .package-lock.json.bak ] && mv .package-lock.json.bak package-lock.json
 
             - name: Pick last validated commit from cache
               id: base_commit
