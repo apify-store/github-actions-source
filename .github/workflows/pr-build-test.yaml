@@ -138,7 +138,7 @@ jobs:
             - name: Setup repository and dependencies
               # Referenced globally, local reference failed when looking for the action in the consumer repo
               # it was being looked for within the repo, not as a relative path to this job when invoked
-              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@${{ inputs.composite-action-sha }}
+              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@${{ inputs.composite-action-ref }}
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
