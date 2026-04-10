@@ -1,0 +1,35 @@
+name: Checkout and restore dependencies
+description: Checkout and restore dependencies
+inputs:
+    working-directory:
+        description: Working directory
+        required: false
+        default: .
+    additional-working-directory:
+        type: string
+        required: false
+
+runs:
+    using: "composite"
+    steps:
+        - id: checkout
+          uses: actions/checkout@v5
+
+        - name: Load cached dependencies
+          id: restore-dependency-cache
+          uses: actions/cache/restore@v5
+          with:
+              fail-on-cache-miss: true
+              path: ${{ inputs.working-directory }}/node_modules
+              key: modules-npm-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+
+        # Some repos require additional dependencies to be cached
+        # like amazon having its actor under ./code and some extra stuff under ./amazon-ts
+        - name: Load additional cached dependencies
+          id: restore-additional-dependency-cache
+          if: inputs.additional-working-directory != ''
+          uses: actions/cache/restore@v5
+          with:
+              fail-on-cache-miss: true
+              path: ${{ inputs.additional-working-directory }}/node_modules
+              key: modules-npm-${{ inputs.additional-working-directory }}-${{ hashFiles(format('{0}/package-lock.json', inputs.additional-working-directory)) }}
