@@ -49,6 +49,9 @@ jobs:
               with:
                 fetch-depth: 0
 
+            # A simple node script that converts secrets to env vars
+            # Use specific commit SHA to prevent someone stealing that repo
+            # - Useful for passing dynamic secrets to env variables, e.g. NPM_TOKEN to `npm ci` step
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
@@ -121,6 +124,13 @@ jobs:
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v4
+
+            # A simple node script that converts secrets to env vars
+            # Use specific commit SHA to prevent someone stealing that repo
+            # - Useful for passing dynamic secrets to env variables, e.g. NPM_TOKEN to `npm ci` step
+            -   uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
+                with:
+                    secrets: ${{ toJSON(secrets) }}
 
             -   name: Use Node.js 24
                 uses: actions/setup-node@v4
