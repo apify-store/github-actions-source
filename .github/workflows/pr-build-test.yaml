@@ -14,7 +14,7 @@ on:
                 type: boolean
                 default: false
                 required: false
-            composite-action-sha:
+            composite-action-ref:
                 type: string
                 required: false
                 default: master
