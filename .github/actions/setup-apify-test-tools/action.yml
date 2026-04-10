@@ -1,0 +1,58 @@
+name: Setup apify-test-tools
+description: Configure secrets, setup Node.js 24, and install apify-test-tools
+
+inputs:
+    working-directory:
+        description: Working directory for the install step
+        default: '.'
+    secrets:
+        description: JSON-encoded secrets from the calling workflow
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
+          with:
+              secrets: ${{ inputs.secrets }}
+
+        - name: Use Node.js 24
+          uses: actions/setup-node@v4
+          with:
+              node-version: 24
+
+        - name: Install apify-test-tools
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          # The complex install logic solves 3 separate problems:
+          # 1. Only install apify-test-tools for speed. We need to hide and restore package(lock).json to avoid npm installing the full dependency tree of the repo.
+          # 2. Allow testing of beta versions of apify-test-tools by checking if the version in package.json has a -beta suffix.
+          # 3. Protect against supply chain attacks by fixing transitive dependencies to be older than 3 days. We do this by installing twice, first with min-release-age to seed package-lock.json. Then we reset min-release-age so we install the desired version of our own code. NPM will try to reuse the existing package-lock.json deps. We will almost never bump deps of apify-test-tools so there minimal risk to get hacked here.
+          run: |
+              # Check for beta version before removing package.json
+              # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
+              TEST_TOOLS_VERSION=$(jq -r '(.dependencies // {}) + (.devDependencies // {}) | .["apify-test-tools"] // ""' package.json)
+              VITEST_VERSION=$(jq -r '(.dependencies // {}) + (.devDependencies // {}) | .["vitest"] // "latest"' package.json)
+
+              # Hide repo deps - we only need apify-test-tools, not the actor's full dependency tree
+              mv package.json .package.json.bak
+              [ -f package-lock.json ] && mv package-lock.json .package-lock.json.bak
+
+              # Install with age protection to pin transitive deps against supply chain attacks, creates package-lock.json with the full dependency tree
+              npm config set min-release-age 3
+              npm install apify-test-tools "vitest@$VITEST_VERSION"
+
+              # Install latest (or beta) on top - transitive deps are already locked above by the package-lock.json
+              npm config set min-release-age 0
+              if echo "$TEST_TOOLS_VERSION" | grep -q "\-beta"; then
+                echo "Beta version ($TEST_TOOLS_VERSION) found in package.json, installing it"
+                npm install "apify-test-tools@$TEST_TOOLS_VERSION"
+              else
+                echo "No beta version in package.json, installing latest apify-test-tools"
+                npm install apify-test-tools@latest
+              fi
+
+              # Restore original package files for consistency for next steps
+              rm -f package.json package-lock.json
+              mv .package.json.bak package.json
+              [ -f .package-lock.json.bak ] && mv .package-lock.json.bak package-lock.json
