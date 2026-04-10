@@ -23,6 +23,8 @@ runs:
               path: ${{ inputs.working-directory }}/node_modules
               key: modules-npm-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
 
+        # Some repos require additional dependencies to be cached
+        # like amazon having its actor under ./code and some extra stuff under ./amazon-ts
         - name: Load additional cached dependencies
           id: restore-additional-dependency-cache
           if: inputs.additional-working-directory != ''
