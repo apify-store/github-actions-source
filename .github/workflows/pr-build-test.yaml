@@ -135,7 +135,7 @@ jobs:
                 # Some repos require custom build checks, so we check if the `build-check` script exists and run it if
                 # it does. Otherwise default to the standard `npx tsc --noEmit` check
                 run: |
-                    HAS_CUSTOM_BUILD_CHECK=$(npx -y json -f package.json scripts.build-check)
+                    HAS_CUSTOM_BUILD_CHECK=$(jq -r '.scripts["build-check"] // empty' package.json)
                     if [ -z "$HAS_CUSTOM_BUILD_CHECK" ]; then
                         npx tsc --noEmit;
                     else
