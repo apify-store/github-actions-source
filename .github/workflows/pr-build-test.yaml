@@ -25,6 +25,7 @@ jobs:
         with:
             working-directory: ${{ inputs.working-directory }}
             additional-working-directory: ${{ inputs.additional-working-directory }}
+        secrets: inherit
 
     checkTestFolder:
         if: ${{ !inputs.skip-platform-tests }}
