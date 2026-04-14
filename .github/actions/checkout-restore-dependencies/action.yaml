@@ -59,11 +59,11 @@ runs:
           working-directory: ${{ inputs.working-directory }}
           run: |
               locked_version=$(jq -r '.packages["node_modules/apify-test-tools"].version' package-lock.json)
-              echo "Locked apify-test-tools version: $locked_version"
+              echo "Package-lock version of apify-test-tools: $locked_version"
               if [[ "$locked_version" == *"-beta"* ]]; then
                 echo "Beta version detected, reinstalling $locked_version to ensure cache consistency"
-                npm install apify-test-tools@$locked_version --audit=false;
+                npm install apify-test-tools@$locked_version --audit=false --no-fund;
               else
                 echo "Installing latest apify-test-tools"
-                npm install apify-test-tools@latest --audit=false;
+                npm install apify-test-tools@latest --audit=false --no-fund;
               fi
