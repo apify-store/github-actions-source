@@ -6,30 +6,61 @@ inputs:
         required: false
         default: .
     additional-working-directory:
-        type: string
+        description: Additional working directory
         required: false
 
+# Sets common steps and ensure we use cached node_modules
 runs:
     using: "composite"
     steps:
-        - id: checkout
-          uses: actions/checkout@v5
 
-        - name: Load cached dependencies
-          id: restore-dependency-cache
-          uses: actions/cache/restore@v5
+        - name: Checkout Repository
+          uses: actions/checkout@v5
           with:
-              fail-on-cache-miss: true
+            fetch-depth: 0
+
+        - name: Use Node.js 24
+          uses: actions/setup-node@v4
+          with:
+              node-version: 24
+
+        - name: Cache dependencies npm
+          id: check-dependencies-cache
+          uses: actions/cache@v5
+          with:
               path: ${{ inputs.working-directory }}/node_modules
               key: modules-npm-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
 
-        # Some repos require additional dependencies to be cached
-        # like amazon having its actor under ./code and some extra stuff under ./amazon-ts
-        - name: Load additional cached dependencies
-          id: restore-additional-dependency-cache
+        - name: Cache additional dependencies npm
+          id: check-additional-dependencies-cache
           if: inputs.additional-working-directory != ''
-          uses: actions/cache/restore@v5
+          uses: actions/cache@v5
           with:
-              fail-on-cache-miss: true
               path: ${{ inputs.additional-working-directory }}/node_modules
               key: modules-npm-${{ inputs.additional-working-directory }}-${{ hashFiles(format('{0}/package-lock.json', inputs.additional-working-directory)) }}
+
+        - name: install npm dependencies
+          if: steps.check-dependencies-cache.outputs.cache-hit != 'true'
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          run: npm ci
+
+        - name: install additional npm dependencies
+          if: inputs.additional-working-directory != '' && steps.check-additional-dependencies-cache.outputs.cache-hit != 'true'
+          shell: bash
+          working-directory: ${{ inputs.additional-working-directory }}
+          run: npm ci
+
+        # Repos can still have older version locally but on cloud we enforce uniformity.
+        # We set this after the cache is populated so this doesn't influence the cache, just overrides node_modules content with minimal changes
+        - name: Enforce latest test tools version
+          # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          run: |
+              if ! npm list apify-test-tools | grep -q "apify-test-tools@.*-beta"; then
+                echo "Didn't find beta version, installing latest apify-test-tools"
+                npm install apify-test-tools@latest;
+              else
+                echo "Beta version of apify-test-tools is installed, we assume this is testing the library so we won't update it to latest"
+              fi
