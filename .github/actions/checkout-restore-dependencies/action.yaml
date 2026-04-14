@@ -52,15 +52,18 @@ runs:
           run: npm ci
 
         # Repos can still have older version locally but on cloud we enforce uniformity.
-        # We set this after the cache is populated so this doesn't influence the cache, just overrides node_modules content with minimal changes
+        # This causes minor mismatch in package-lock.json and node_modules but it shouldn't cause any issues.
         - name: Enforce latest test tools version
           # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
           shell: bash
           working-directory: ${{ inputs.working-directory }}
           run: |
-              if ! npm list apify-test-tools | grep -q "apify-test-tools@.*-beta"; then
-                echo "Didn't find beta version, installing latest apify-test-tools"
-                npm install apify-test-tools@latest;
+              locked_version=$(jq -r '.packages["node_modules/apify-test-tools"].version' package-lock.json)
+              echo "Locked apify-test-tools version: $locked_version"
+              if [[ "$locked_version" == *"-beta"* ]]; then
+                echo "Beta version detected, reinstalling $locked_version to ensure cache consistency"
+                npm install apify-test-tools@$locked_version --audit=false;
               else
-                echo "Beta version of apify-test-tools is installed, we assume this is testing the library so we won't update it to latest"
+                echo "Installing latest apify-test-tools"
+                npm install apify-test-tools@latest --audit=false;
               fi
