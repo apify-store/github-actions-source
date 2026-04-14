@@ -29,10 +29,10 @@ jobs:
             - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
               with:
                 secrets: ${{ toJSON(secrets) }}
-    
+
             - name: Setup repository and dependencies
             # For testing, you have to temporarily change the branch
-              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@feat/cache-all-workflows
+              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}

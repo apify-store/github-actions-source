@@ -10,6 +10,7 @@ inputs:
         required: false
 
 # Sets common steps and ensure we use cached node_modules
+# IF YOU TEST CHANGES IN THIS, YOU HAVE TO CHANGE THE BRANCH OF THIS IN ALL WORKFLOWS AND NOT FORGET TO CHANGE IT BACK BEFORE MERGE!!!
 runs:
     using: "composite"
     steps:
