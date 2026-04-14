@@ -86,10 +86,8 @@ jobs:
                   export RUN_PLATFORM_TESTS=1
                   npx vitest ./test/platform --run --maxConcurrency 20 --fileParallelism=true --maxWorkers 100
 
-            # NOTE: This is an optimization that if we did functional changes and later only cosmetic changes (e.g. dev readme), we will compare changes files only for the last commit. We want to cache the latest commit only if the tests are successful
+            # NOTE: This is an optimization that if we did functional changes and later only cosmetic changes (e.g. dev readme), we will compare changes files only for the last commit. This must run after tests because we want to cache the latest commit only if the tests are successful
             - name: Store last validated commit to cache
-              # We only want to store base commit if there were functional changes. If there are no functional changes, not having base commit will allow us to compare branches directly with git diff target_branch...source_branch which can understand that functional changes come from merge commit with target branch. This way we don't have to run tests if we have just readme changes but we need to merge master in. If there were no functional changes, base commit is useless anyway.
-              if: steps.build.outputs.actor_builds != '[]'
               run: |
                   base_commit=$(cat base_commit.txt 2>/dev/null || echo "")
                   echo "Old last validated (base) commit: $base_commit"
