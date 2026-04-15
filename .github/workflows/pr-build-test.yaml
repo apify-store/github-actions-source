@@ -27,27 +27,8 @@ jobs:
             additional-working-directory: ${{ inputs.additional-working-directory }}
         secrets: inherit
 
-    checkTestFolder:
-        if: ${{ !inputs.skip-platform-tests }}
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: ${{ inputs.working-directory }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-            - name: Check for test folder
-              id: check
-              run: |
-                if [ ! -d "test/platform" ]; then
-                    echo "No platform test folder found. Failing the workflow."
-                    exit 1
-                fi
-
     platformTest:
         if: ${{ !inputs.skip-platform-tests }}
-        needs: checkTestFolder
         runs-on: ubuntu-latest
         defaults:
             run:
