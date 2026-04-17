@@ -26,7 +26,6 @@ jobs:
         defaults:
             run:
                 working-directory: ${{ inputs.working-directory }}
-        needs: [checkTestFolder]
         steps:
             # A simple node script that converts secrets to env vars
             # Use specific commit SHA to protect from someone stealing that repo
