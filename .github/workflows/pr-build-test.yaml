@@ -134,3 +134,15 @@ jobs:
                     else
                         echo "knip nor ts-unused-exports are installed. Skipping unused exports check.";
                     fi
+
+            -   name: Dataset Schema Sync Check
+                # Opt-in by presence: only repos that define a `dataset-schema:check` script in
+                # package.json run this. Keeps the workflow safe for consumers without the script.
+                run: |
+                    HAS_SCHEMA_CHECK=$(jq -r '.scripts["dataset-schema:check"] // empty' package.json)
+                    if [ -n "$HAS_SCHEMA_CHECK" ]; then
+                        echo "dataset-schema:check script found. Running it.";
+                        npm run dataset-schema:check;
+                    else
+                        echo "No dataset-schema:check script in package.json. Skipping.";
+                    fi
