@@ -1,22 +1,30 @@
 name: Claude Code
 
 on:
-    workflow_call:
-        inputs:
-            ZENHUB_WORKSPACE_ID:
-                type: string
-                required: true
-                description: Zenhub workspace ID
-        secrets:
-            ANTHROPIC_API_KEY:
-                required: true
-                description: Claude API key
-            ZENHUB_TOKEN:
-                required: true
-                description: Zenhub token
-            GITHUB_TOKEN:
-                required: true
-                description: GitHub token
+    issue_comment:
+        types: [created]
+    pull_request_review_comment:
+        types: [created]
+    issues:
+        types: [opened, assigned, labeled]
+    pull_request_review:
+        types: [submitted]
+    # workflow_call:
+    #     inputs:
+    #         ZENHUB_WORKSPACE_ID:
+    #             type: string
+    #             required: true
+    #             description: Zenhub workspace ID
+    #     secrets:
+    #         ANTHROPIC_API_KEY:
+    #             required: true
+    #             description: Claude API key
+    #         ZENHUB_TOKEN:
+    #             required: true
+    #             description: Zenhub token
+    #         GITHUB_TOKEN:
+    #             required: true
+    #             description: GitHub token
 
 jobs:
     claude:
@@ -51,10 +59,11 @@ jobs:
                 github.event_name == 'issues' &&
                 github.event.action == 'labeled' &&
                 github.event.label.name == 'claude' &&
-                steps.claude.conclusion == 'success'
+                steps.claude.conclusion == 'success' &&
+                'meme' == 'lala'
               env:
-                ZENHUB_TOKEN: ${{ secrets.ZENHUB_TOKEN }}
-                ZENHUB_WORKSPACE_ID: ${{ inputs.ZENHUB_WORKSPACE_ID }}
+                # ZENHUB_TOKEN: ${{ secrets.ZENHUB_TOKEN }}
+                # ZENHUB_WORKSPACE_ID: ${{ inputs.ZENHUB_WORKSPACE_ID }}
                 REPO_GH_ID: ${{ github.event.repository.id }}
                 ISSUE_NUMBER: ${{ github.event.issue.number }}
               run: |
