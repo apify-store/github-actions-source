@@ -52,24 +52,14 @@ jobs:
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
                 script: |
-                    // Create label if it doesn't exist yet
                     try {
-                    await github.rest.issues.createLabel({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        name: 'claude:done',
-                        color: '7057ff',
-                        description: 'Already processed by Claude'
-                    });
+                        await github.rest.issues.addLabels({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            issue_number: context.issue.number,
+                            labels: ['claude:done']
+                        });
+                        console.log('Label claude:done added to issue.');
                     } catch (e) {
-                    // Label already exists, ignore
+                        console.log('Label claude:done does not exist. Skipping.');
                     }
-
-                    await github.rest.issues.addLabels({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: context.issue.number,
-                    labels: ['claude:done']
-                    });
-
-                    console.log('Label claude:done added to issue.');
