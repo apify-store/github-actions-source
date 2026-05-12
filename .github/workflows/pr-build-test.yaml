@@ -112,13 +112,18 @@ jobs:
             -   name: Lint
                 run: npm run lint
 
+            -   name: Install Apify CLI
+                run: npm install -g apify-cli
+
             -   name: Input Schema Validation
-                # `apify vis` fail code is changed from 1 to 255 so xargs aborts on first error.
                 run: |
+                    # let apify cli initialize its config to avoid race conditions with xargs
+                    apify --version >/dev/null 2>&1
                     if [ -d ./.actor ]; then
                         apify vis
                     fi
                     if [ -d ./actors ]; then
+                        # `apify vis` fail code is changed from 1 to 255 so xargs aborts on first error.
                         cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && apify vis || exit 255'
                     fi
 
