@@ -112,6 +112,16 @@ jobs:
             -   name: Lint
                 run: npm run lint
 
+            -   name: Input Schema Validation
+                # `apify vis` fail code is changed from 1 to 255 so xargs aborts on first error.
+                run: |
+                    if [ -d ./.actor ]; then
+                        apify vis
+                    fi
+                    if [ -d ./actors ]; then
+                        cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && apify vis || exit 255'
+                    fi
+
             -   name: Test
                 run: npm test
 
