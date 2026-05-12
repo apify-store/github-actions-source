@@ -40,6 +40,7 @@ jobs:
                 use_commit_signing: true
                 claude_args: |
                     --model claude-sonnet-4-6
+                    --allowedTools "Bash(gh pr create*),Bash(gh api*)"
 
             - name: Mark issue as processed by Claude
               if: |
