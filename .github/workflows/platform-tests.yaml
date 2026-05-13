@@ -3,7 +3,13 @@ name: Platform tests
 on:
     workflow_call:
         inputs:
+            # Deprecated, use `test-files-glob`
             subtest:
+                type: string
+                default: ""
+                required: false
+            # Specify what tests you want to run, relative to `test/platform`
+            test-files-glob:
                 type: string
                 default: ""
                 required: false
@@ -41,7 +47,7 @@ jobs:
               run: |
                   set +e
                   export RUN_ALL_PLATFORM_TESTS=1
-                  npx vitest ./test/platform/${{ inputs.subtest }} \
+                  npx vitest ./test/platform/${{ inputs.test-files-glob || inputs.subtest }} \
                     --run \
                     --reporter=default \
                     --reporter=json \
