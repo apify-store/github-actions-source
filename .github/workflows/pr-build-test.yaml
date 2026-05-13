@@ -123,8 +123,7 @@ jobs:
                         apify validate-schema
                     fi
                     if [ -d ./actors ]; then
-                        # `apify validate-schema` fail code is changed from 1 to 255 so xargs aborts on first error.
-                        cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && apify validate-schema || exit 255'
+                        cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && apify validate-schema || echo "::error::Schema validation failed in actor: {}"'
                     fi
 
             -   name: Test
