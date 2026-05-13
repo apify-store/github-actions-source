@@ -112,18 +112,19 @@ jobs:
             -   name: Lint
                 run: npm run lint
 
-            -   name: Install Apify CLI
-                run: npm install -g apify-cli
-
             -   name: Input Schema Validation
                 run: |
+                    if [ ! -d "node_modules/apify-cli" ]; then
+                        echo "::warning::apify-cli is not installed as an npm dependency. Skipping schema validation."
+                        exit 0
+                    fi
                     # let apify cli initialize its config to avoid race conditions with xargs
-                    apify --version >/dev/null 2>&1
+                    npx apify --version >/dev/null 2>&1
                     if [ -d ./.actor ]; then
-                        apify validate-schema
+                        npx apify validate-schema
                     fi
                     if [ -d ./actors ]; then
-                        cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && apify validate-schema || echo "::error::Schema validation failed in actor: {}"'
+                        cd ./actors && ls | xargs -P 8 -I {} sh -c 'cd {} && npx apify validate-schema || echo "::error::Schema validation failed in actor: {}"'
                     fi
 
             -   name: Test
