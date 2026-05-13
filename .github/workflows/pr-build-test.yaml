@@ -118,8 +118,7 @@ jobs:
                         echo "::warning::apify-cli is not installed as an npm dependency. Skipping schema validation."
                         exit 0
                     fi
-                    # let apify cli initialize its config to avoid race conditions with xargs
-                    npx apify --version >/dev/null 2>&1
+                    npx apify telemetry disable >/dev/null 2>&1
                     if [ -d ./.actor ]; then
                         npx apify validate-schema
                     fi
