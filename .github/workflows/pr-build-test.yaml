@@ -117,7 +117,7 @@ jobs:
                     if [ ! -d "node_modules/apify-cli" ]; then
                         echo "::warning::apify-cli is not installed as an npm dependency. Improve CI speed by installing it"
                     fi
-                    npx --yes apify telemetry disable >/dev/null 2>&1
+                    npx --yes apify telemetry disable
                     if [ -d ./.actor ]; then
                         npx apify validate-schema
                     fi
