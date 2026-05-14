@@ -115,10 +115,9 @@ jobs:
             -   name: Input Schema Validation
                 run: |
                     if [ ! -d "node_modules/apify-cli" ]; then
-                        echo "::warning::apify-cli is not installed as an npm dependency. Skipping schema validation."
-                        exit 0
+                        echo "::warning::apify-cli is not installed as an npm dependency. Improve CI speed by installing it"
                     fi
-                    npx apify telemetry disable >/dev/null 2>&1
+                    npx --yes apify telemetry disable >/dev/null 2>&1
                     if [ -d ./.actor ]; then
                         npx apify validate-schema
                     fi
