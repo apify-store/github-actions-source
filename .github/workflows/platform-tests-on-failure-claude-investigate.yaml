@@ -1,0 +1,123 @@
+name: Platform tests on failure claude investigate
+
+# Reusable workflow that runs Claude Code to investigate a failing E2E platform test.
+#
+# When called after a test failure, Claude will:
+#   1. Review test logs, error messages, and recent git history to determine the root cause.
+#   2. Distinguish between false positives (outdated test) and true regressions (broken code).
+#   3. Open a GitHub issue with its findings, or skip if a duplicate already exists.
+#   4. Comment on the issue with a follow-up instruction and apply the "claude" label.
+#
+# Example usage:
+#
+# jobs:
+#     platformTestsCore:
+#         uses: apify-store/github-actions-source/.github/workflows/platform-tests.yaml@master
+#         with:
+#             subtest: core
+#         secrets: inherit
+#
+#     handle-failure:
+#         needs: platformTestsCore
+#         if: ${{ failure() }}
+#         uses: ./.github/workflows/on-failure.yaml
+#         secrets: inherit
+
+on:
+    workflow_call:
+        secrets:
+            ANTHROPIC_API_KEY:
+                required: true
+                description: Claude API key
+
+jobs:
+    on-failure:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: read
+            issues: write
+            id-token: write
+            actions: read
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Run Claude Code
+              id: claude
+              uses: anthropics/claude-code-action@v1
+              with:
+                  prompt: |
+                      Investigate the failing E2E platform test and open a GitHub issue documenting your findings. Start by reviewing the test logs, error messages, and any recent code or environment changes to determine the root cause.
+
+                      The failure will typically fall into one of two categories:
+                      - False positive (outdated test): Something changed on the website or environment that caused a previously passing test to fail — the test itself needs to be updated to reflect the new expected behavior.
+                      - True positive (real regression): A code change broke existing functionality — the underlying code needs to be fixed, not the test.
+
+                      Use available tools to check previous workflow runs, git history, and existing GitHub issues to gather context and avoid creating duplicate issues.
+
+                      If you create a new issue, you MUST write its issue number (just the number, nothing else) to $GITHUB_WORKSPACE/issue-number.txt as the very last thing you do. If you skip creating one because a duplicate already exists, do not create the file.
+                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  claude_args: |
+                      --model claude-sonnet-4-6
+                      --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write"
+
+            - name: Upload Claude output (for debugging)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: claude-output
+                  path: /home/runner/work/_temp/claude-execution-output.json
+
+            - name: Read created issue
+              id: issue
+              # Claude writes the issue number to a file to transfer it. There are not much better alternatives.
+              run: |
+                  if [ -f "$GITHUB_WORKSPACE/issue-number.txt" ]; then
+                      ISSUE_NUMBER=$(cat "$GITHUB_WORKSPACE/issue-number.txt")
+                      echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+                      echo "Issue created: #$ISSUE_NUMBER"
+                  else
+                      echo "number=" >> $GITHUB_OUTPUT
+                      echo "No issue created (duplicate skipped)"
+                  fi
+
+            - name: Comment on issue to instruct PR creation
+              if: steps.issue.outputs.number != ''
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      await github.rest.issues.createComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: parseInt('${{ steps.issue.outputs.number }}'),
+                          body: "CLAUDE INSTRUCTION: open up a PR for this issue",
+                      });
+
+            - name: Add Claude label to issue
+              if: steps.issue.outputs.number != ''
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      // Create label if it doesn't exist yet
+                      try {
+                          await github.rest.issues.createLabel({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              name: "claude",
+                              color: "d93f0b",
+                          });
+                      } catch (e) {
+                          // Label already exists, ignore
+                      }
+
+                      await github.rest.issues.addLabels({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: parseInt('${{ steps.issue.outputs.number }}'),
+                          labels: ["claude"],
+                      });
+
+                      console.log(`Label claude added to issue #${{ steps.issue.outputs.number }}.`);

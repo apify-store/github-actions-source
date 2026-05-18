@@ -6,9 +6,6 @@ on:
             ANTHROPIC_API_KEY:
                 required: true
                 description: Claude API key
-            GITHUB_TOKEN:
-                required: true
-                description: GitHub token
 
 jobs:
     claude:
