@@ -48,11 +48,11 @@ jobs:
               uses: anthropics/claude-code-action@v1
               with:
                   prompt: |
-                      Investigate the failing E2E platform test and open a GitHub issue documenting your findings. Start by reviewing the test logs, error messages, and any recent code or environment changes to determine the root cause.
+                      Investigate the failing E2E platform test and open a GitHub issue documenting your findings. Start by reviewing the test logs, error messages, and recent workflow run history to determine the root cause.
 
-                      The failure will typically fall into one of two categories:
-                      - False positive (outdated test): Something changed on the website or environment that caused a previously passing test to fail — the test itself needs to be updated to reflect the new expected behavior.
-                      - True positive (real regression): A code change broke existing functionality — the underlying code needs to be fixed, not the test.
+                      The failure will typically fall into one of these categories:
+                      - Flaky test: The test is non-deterministic or depends on timing/external state and fails intermittently. Check past workflow runs to see if this test has failed before.
+                      - Real bug: Genuine broken functionality — either a pre-existing issue or an environment/dependency change outside the codebase (e.g. a website changed its structure, an external API changed behavior).
 
                       Use available tools to check previous workflow runs, git history, and existing GitHub issues to gather context and avoid creating duplicate issues.
 
