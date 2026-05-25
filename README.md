@@ -1,6 +1,11 @@
 ## Base GitHub Action workflows
 These workflows are called by the individual workflows in each repository. They are stored here to avoid code duplication and to make it easier to maintain. Ideally, the individual workflows should only call these base workflows and not contain any logic themselves.
 
+### Usage
+- **platform-tests**: [Notion Guide](https://www.notion.so/apify/E2E-Actor-platform-tests-setup-332f39950a228038ac41e62eb9d41888) by @Patai5
+- **pr-build-test**: Just trigger on *pull_request* to master and forget about it
+- **claude**: [Notion Guide](https://www.notion.so/apify/Claude-action-setup-36bf39950a2280f9b88fe33bc39d6f24) by @JuanGalilea
+
 ### Caution
 These workflows are used based on branch code, there is no deployment. So once you merge the code, it will be running in production.
 
@@ -16,6 +21,7 @@ These workflows depend on https://github.com/apify-projects/apify-test-tools. Th
 - platform-tests - Scheduled (daily, hourly) tests on latest builds
 - pr-build-test - On PR updates, builds 0.99 versions and tests on them.
 - push-build-latest - This releases master branch to latest Actor version. This almost always happens after PR is merged (since we forbid direct push)
+- claude - This makes claude being able to respond on github, this has several different triggers its capable to work with.
 
 ### Possible TODOs
 - Install latest apify-test-tools automatically in this workflow
