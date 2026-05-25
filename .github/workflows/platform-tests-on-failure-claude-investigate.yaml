@@ -29,6 +29,9 @@ on:
             ANTHROPIC_API_KEY:
                 required: true
                 description: Claude API key
+            GITHUB_TOKEN_PAT:
+                required: true
+                description: Personal access token used to apply labels so downstream workflows are triggered (GITHUB_TOKEN cannot trigger other workflows)
 
 jobs:
     on-failure:
@@ -99,7 +102,7 @@ jobs:
               if: steps.issue.outputs.number != ''
               uses: actions/github-script@v7
               with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  github-token: ${{ secrets.GITHUB_TOKEN_PAT }}
                   script: |
                       // Create label if it doesn't exist yet
                       try {
