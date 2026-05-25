@@ -37,7 +37,6 @@ jobs:
             contents: write
             pull-requests: read
             issues: write
-            id-token: write
             actions: read
         steps:
             - name: Checkout repository
@@ -57,6 +56,7 @@ jobs:
                       Use available tools to check previous workflow runs, git history, and existing GitHub issues to gather context and avoid creating duplicate issues.
 
                       If you create a new issue, you MUST write its issue number (just the number, nothing else) to $GITHUB_WORKSPACE/issue-number.txt as the very last thing you do. If you skip creating one because a duplicate already exists, do not create the file.
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   claude_args: |
                       --model claude-sonnet-4-6
