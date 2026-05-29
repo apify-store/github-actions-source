@@ -135,7 +135,7 @@ jobs:
                   prompt: "Open a pull request to address GitHub issue #${{ needs.on-failure.outputs.issue_number }}. Use `gh issue view ${{ needs.on-failure.outputs.issue_number }}` to read the issue details first, then implement the fix and create a PR."
                   claude_args: |
                       --model claude-sonnet-4-6
-                      --allowedTools "Bash(gh pr create*),Bash(gh api*)"
+                      --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write" "Edit"
 
             - name: Mark issue as processed by Claude
               if: steps.claude.conclusion == 'success'
