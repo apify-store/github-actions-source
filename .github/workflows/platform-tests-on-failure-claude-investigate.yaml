@@ -130,7 +130,6 @@ jobs:
               uses: anthropics/claude-code-action@v1
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  track_progress: true
                   use_commit_signing: true
                   prompt: "Open a pull request to address GitHub issue #${{ needs.on-failure.outputs.issue_number }}. Use `gh issue view ${{ needs.on-failure.outputs.issue_number }}` to read the issue details first, then implement the fix and create a PR."
                   claude_args: |
