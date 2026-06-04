@@ -1,5 +1,7 @@
 name: "Platform tests: Claude failure investigation and fix"
 
+# Notion page docs: https://app.notion.com/p/apify/374f39950a2280d99c89f27fc9fb49c5
+
 # Reusable workflow that uses Claude Code to investigate a failing E2E platform test and
 # attempt an automated fix.
 #
