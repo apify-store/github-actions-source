@@ -76,7 +76,7 @@ jobs:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   claude_args: |
                       --model ${{ inputs.model }}
-                      --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write"
+                      --allowedTools "Bash(gh*)" "Bash(git*)" "Bash(grep*)" "Bash(find*)" "Read" "Edit" "Write" "WebFetch"
 
             - name: Upload Claude output (for debugging)
               if: always()
@@ -149,7 +149,7 @@ jobs:
                   prompt: "Open a pull request to address GitHub issue #${{ needs.investigate.outputs.issue_number }}. Use `gh issue view ${{ needs.investigate.outputs.issue_number }}` to read the issue details first, then implement the fix and create a PR."
                   claude_args: |
                       --model ${{ inputs.model }}
-                      --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write" "Edit"
+                      --allowedTools "Bash(gh*)" "Bash(git*)" "Bash(grep*)" "Bash(find*)" "Read" "Edit" "Write" "WebFetch"
 
             - name: Upload Claude output (for debugging)
               if: always()
