@@ -33,6 +33,12 @@ name: "Platform tests: Claude failure investigation and fix"
 
 on:
     workflow_call:
+        inputs:
+            model:
+                required: false
+                type: string
+                default: claude-sonnet-4-6
+                description: Claude model to use for investigation and fix
         secrets:
             ANTHROPIC_API_KEY:
                 required: true
@@ -69,7 +75,7 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   claude_args: |
-                      --model claude-sonnet-4-6
+                      --model ${{ inputs.model }}
                       --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write"
 
             - name: Upload Claude output (for debugging)
@@ -142,7 +148,7 @@ jobs:
                   use_commit_signing: true
                   prompt: "Open a pull request to address GitHub issue #${{ needs.investigate.outputs.issue_number }}. Use `gh issue view ${{ needs.investigate.outputs.issue_number }}` to read the issue details first, then implement the fix and create a PR."
                   claude_args: |
-                      --model claude-sonnet-4-6
+                      --model ${{ inputs.model }}
                       --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write" "Edit"
 
             - name: Upload Claude output (for debugging)
