@@ -76,7 +76,7 @@ jobs:
               if: always()
               uses: actions/upload-artifact@v4
               with:
-                  name: claude-output
+                  name: claude-output-investigate
                   path: /home/runner/work/_temp/claude-execution-output.json
 
             - name: Read created issue
@@ -144,6 +144,13 @@ jobs:
                   claude_args: |
                       --model claude-sonnet-4-6
                       --allowedTools "Bash(gh*)" "Bash(git*)" "Read" "Write" "Edit"
+
+            - name: Upload Claude output (for debugging)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: claude-output-fix
+                  path: /home/runner/work/_temp/claude-execution-output.json
 
             # Adds "claude:done" to the issue to signal that a fix PR was opened. Pure status
             # tracking — does not trigger any further automation.
