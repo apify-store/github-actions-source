@@ -2,6 +2,12 @@ name: Claude Code
 
 on:
     workflow_call:
+        inputs:
+            model:
+                default: sonnet
+                type: string
+                description: Model to use for Claude Code (best, sonnet, opus, haiku, sonnet[1m], opus[1m], opusplan)
+                required: false
         secrets:
             ANTHROPIC_API_KEY:
                 required: true
@@ -37,7 +43,7 @@ jobs:
                 track_progress: true
                 use_commit_signing: true
                 claude_args: |
-                    --model claude-sonnet-4-6
+                    --model "${{ inputs.model }}"
                     --allowedTools "Bash(gh pr*),Bash(gh api*), Bash(gh issue*)"
 
             - name: Mark issue as processed by Claude
