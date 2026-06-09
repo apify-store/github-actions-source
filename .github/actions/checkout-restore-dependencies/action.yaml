@@ -19,6 +19,7 @@ runs:
           uses: actions/checkout@v5
           with:
             fetch-depth: 0
+            # We want to test our branch, not GitHub's fake merge commit (we must test that before merging anyway)
             ref: ${{ github.head_ref || github.ref }}
 
         - name: Use Node.js 24
