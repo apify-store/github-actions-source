@@ -37,7 +37,7 @@ on:
             model:
                 required: false
                 type: string
-                default: claude-sonnet-4-6
+                default: sonnet
                 description: Claude model to use for investigation and fix
         secrets:
             ANTHROPIC_API_KEY:
