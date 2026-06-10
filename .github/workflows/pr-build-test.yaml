@@ -40,7 +40,7 @@ jobs:
 
             - name: Setup repository and dependencies
             # For testing, you have to temporarily change the branch
-              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
+              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@fix/run-on-branch
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
