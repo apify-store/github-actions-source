@@ -115,10 +115,12 @@ jobs:
                 # it does. Otherwise default to the standard `npx tsc --noEmit` check
                 run: |
                     HAS_CUSTOM_BUILD_CHECK=$(jq -r '.scripts["build-check"] // empty' package.json)
-                    if [ -z "$HAS_CUSTOM_BUILD_CHECK" ]; then
-                        npx tsc --noEmit;
-                    else
+                    if [ -n "$HAS_CUSTOM_BUILD_CHECK" ]; then
+                        echo "Custom build check script found. Running it.";
                         npm run build-check;
+                    else
+                        echo "No custom build check script found. Running standard tsc --noEmit.";
+                        npx tsc --noEmit;
                     fi
 
             -   name: Lint
@@ -130,9 +132,11 @@ jobs:
             -   name: Prettier Check
                 run: |
                     HAS_FORMAT_CHECK_SCRIPT=$(jq -r '.scripts["format:check"] // empty' package.json)
-                    if [ -z "$HAS_FORMAT_CHECK_SCRIPT" ]; then
+                    if [ -n "$HAS_FORMAT_CHECK_SCRIPT" ]; then
+                        echo "Custom format:check script found. Running it.";
                         npm run format:check;
                     elif [ -d "node_modules/prettier" ]; then
+                        echo "Prettier is installed. Running prettier --check .";
                         npx prettier --check .;
                     else
                         echo "Prettier is not installed. Skipping Prettier check.";
@@ -141,7 +145,8 @@ jobs:
             -   name: Unused Exports Check
                 run: |
                     HAS_CHECK_UNUSED_SCRIPT=$(jq -r '.scripts["check-unused"] // empty' package.json)
-                    if [ -z "$HAS_CHECK_UNUSED_SCRIPT" ]; then
+                    if [ -n "$HAS_CHECK_UNUSED_SCRIPT" ]; then
+                        echo "Custom check-unused script found. Running it.";
                         npm run check-unused;
                     elif [ -d "node_modules/knip" ]; then
                         echo "Knip is installed. Running knip to check for unused exports.";
