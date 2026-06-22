@@ -129,7 +129,7 @@ jobs:
             -   name: Test
                 run: npm test
 
-            -   name: Prettier Check
+            -   name: Formatter Check
                 run: |
                     HAS_FORMAT_CHECK_SCRIPT=$(jq -r '.scripts["format:check"] // empty' package.json)
                     if [ -n "$HAS_FORMAT_CHECK_SCRIPT" ]; then
