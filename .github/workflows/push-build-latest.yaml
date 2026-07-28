@@ -10,6 +10,11 @@ on:
             additional-working-directory:
                 type: string
                 required: false
+            # Defaults to #notif-<repo-name> when empty, matching the previous behavior.
+            report-slack-channel:
+                type: string
+                default: ""
+                required: false
 
 jobs:
     pushBuildLatest:
@@ -38,7 +43,7 @@ jobs:
                   additional-working-directory: ${{ inputs.additional-working-directory }}
 
             - name: Release Actors and notify
-              run: npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "#notif-${{ github.event.repository.name }}" --use-docker-cache
+              run: npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}" --use-docker-cache
 
             - name: Delete old builds
               run: npx apify-test-tools delete-old-builds
