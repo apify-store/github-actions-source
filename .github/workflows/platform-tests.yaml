@@ -29,7 +29,8 @@ on:
 jobs:
     scheduledPlatformTests:
         name: Scheduled Platform tests
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        # TODO(test): revert before merge — temporary branch allow for testing report-slack-channel
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test/configurable-slack-channels'
         runs-on: ubuntu-latest
         defaults:
             run:
