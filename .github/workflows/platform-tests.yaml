@@ -20,6 +20,11 @@ on:
             additional-working-directory:
                 type: string
                 required: false
+            # Defaults to #notif-<repo-name> when empty, matching the previous behavior.
+            report-slack-channel:
+                type: string
+                default: ""
+                required: false
 
 jobs:
     scheduledPlatformTests:
@@ -61,7 +66,7 @@ jobs:
                     --workspace . \
                     --workflow-name "${{ github.workflow }}" \
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-                    --report-slack-channel "#notif-${{ github.event.repository.name }}"
+                    --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}"
                   exit $return_code
 
             - name: Upload Vitest JSON artifact
