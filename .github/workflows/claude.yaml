@@ -53,6 +53,19 @@ jobs:
                   fi
                   echo "allowed_tools=${ALLOWED_TOOLS}" >> "$GITHUB_OUTPUT"
 
+            - name: Compute PR instruction
+              id: pr_instruction
+              env:
+                EVENT_NAME: ${{ github.event_name }}
+                IS_PR_COMMENT: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request != null }}
+              run: |
+                  if [ "$EVENT_NAME" = "pull_request_review_comment" ] || [ "$EVENT_NAME" = "pull_request_review" ] || [ "$IS_PR_COMMENT" = "true" ]; then
+                      INSTRUCTION="After completing the requested changes, push them to the existing pull request's branch. Do not open a new pull request."
+                  else
+                      INSTRUCTION="After completing the requested changes, always open a pull request with your work. Do not just push commits or leave a comment without opening a PR."
+                  fi
+                  echo "instruction=${INSTRUCTION}" >> "$GITHUB_OUTPUT"
+
             - name: Run Claude Code
               id: claude
               uses: anthropics/claude-code-action@v1
@@ -63,7 +76,7 @@ jobs:
                 claude_args: |
                     --model "${{ inputs.model }}"
                     --allowedTools "${{ steps.tools.outputs.allowed_tools }}"
-                    --append-system-prompt "After completing the requested changes, always open a pull request with your work. Do not just push commits or leave a comment without opening a PR."
+                    --append-system-prompt "${{ steps.pr_instruction.outputs.instruction }}"
 
             - name: Mark issue as processed by Claude
               if: |
