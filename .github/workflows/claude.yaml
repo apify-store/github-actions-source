@@ -8,6 +8,11 @@ on:
                 type: string
                 description: Model to use for Claude Code (best, sonnet, opus, haiku, sonnet[1m], opus[1m], opusplan)
                 required: false
+            extra_allowed_tools:
+                default: ""
+                type: string
+                description: Comma-separated list of additional tool patterns to append to --allowedTools (e.g. "Bash(npm run e2e),Bash(npm run typecheck)")
+                required: false
         secrets:
             ANTHROPIC_API_KEY:
                 required: true
@@ -35,6 +40,19 @@ jobs:
               with:
                 fetch-depth: 1
 
+            - name: Compute allowed tools
+              id: tools
+              env:
+                EXTRA_ALLOWED_TOOLS: ${{ inputs.extra_allowed_tools }}
+              run: |
+                  BASE_TOOLS="Bash(gh pr*),Bash(gh api*),Bash(gh issue*),Bash(npm ci)"
+                  if [ -n "$EXTRA_ALLOWED_TOOLS" ]; then
+                      ALLOWED_TOOLS="${BASE_TOOLS},${EXTRA_ALLOWED_TOOLS}"
+                  else
+                      ALLOWED_TOOLS="${BASE_TOOLS}"
+                  fi
+                  echo "allowed_tools=${ALLOWED_TOOLS}" >> "$GITHUB_OUTPUT"
+
             - name: Run Claude Code
               id: claude
               uses: anthropics/claude-code-action@v1
@@ -44,7 +62,7 @@ jobs:
                 use_commit_signing: true
                 claude_args: |
                     --model "${{ inputs.model }}"
-                    --allowedTools "Bash(gh pr*),Bash(gh api*), Bash(gh issue*)"
+                    --allowedTools "${{ steps.tools.outputs.allowed_tools }}"
 
             - name: Mark issue as processed by Claude
               if: |
