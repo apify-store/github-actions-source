@@ -63,6 +63,7 @@ jobs:
                 claude_args: |
                     --model "${{ inputs.model }}"
                     --allowedTools "${{ steps.tools.outputs.allowed_tools }}"
+                    --append-system-prompt "After completing the requested changes, always open a pull request with your work. Do not just push commits or leave a comment without opening a PR."
 
             - name: Mark issue as processed by Claude
               if: |
