@@ -32,18 +32,13 @@ jobs:
             run:
                 working-directory: ${{ inputs.working-directory }}
         steps:
-            # A simple node script that converts secrets to env vars
-            # Use specific commit SHA to protect from someone stealing that repo
-            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-              with:
-                secrets: ${{ toJSON(secrets) }}
-
             - name: Setup repository and dependencies
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
+                  npm-token: ${{ secrets.NPM_TOKEN }}
 
             - name: Pick last validated commit from cache
               id: base_commit
@@ -56,9 +51,20 @@ jobs:
                 # This is needed to force overriding the cache with new entry at the end
                 restore-keys: base_commit-
 
+            # The Actor tokens are named per Actor in apify-test-tools.config.json, so they can't be
+            # listed here. apify-token-env.mjs pulls just the APIFY_TOKEN_* entries out of the secrets
+            # map into this shell, and ALL_SECRETS is dropped before any npx call, so the tokens reach
+            # `apify-test-tools build` and nothing else in the job.
             - name: Build
               id: build
+              env:
+                  ALL_SECRETS: ${{ toJSON(secrets) }}
               run: |
+                  # Assign first so `bash -e` aborts on a script failure. `eval "$(...)"` would
+                  # silently eval an empty string and carry on without any tokens.
+                  apify_token_env="$(node "$RUNNER_TEMP/apify-token-env.mjs")"
+                  eval "$apify_token_env"
+                  unset ALL_SECRETS apify_token_env
                   base_commit=$(cat base_commit.txt 2>/dev/null || echo "")
                   echo "Last validated (base) commit to be used for build & test: $base_commit"
                   args=(
@@ -70,11 +76,14 @@ jobs:
                   actor_builds=$(npx apify-test-tools build "${args[@]}")
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
 
+            # Runs the repo's test code and its whole import graph, so it gets the tester token only.
+            # The Actor tokens from the build step can modify and delete Actors and never appear here.
             - name: Test
-              run: |
-                  export ACTOR_BUILDS='${{ steps.build.outputs.actor_builds }}'
-                  export RUN_PLATFORM_TESTS=1
-                  npx vitest ./test/platform/${{ inputs.test-files-glob }} --run --maxConcurrency 20 --fileParallelism=true --maxWorkers 100
+              env:
+                  ACTOR_BUILDS: ${{ steps.build.outputs.actor_builds }}
+                  TESTER_APIFY_TOKEN: ${{ secrets.TESTER_APIFY_TOKEN }}
+                  RUN_PLATFORM_TESTS: "1"
+              run: npx vitest ./test/platform/${{ inputs.test-files-glob }} --run --maxConcurrency 20 --fileParallelism=true --maxWorkers 100
 
             # NOTE: This is an optimization that if we did functional changes and later only cosmetic changes (e.g. dev readme), we will compare changes files only for the last commit. This must run after tests because we want to cache the latest commit only if the tests are successful
             - name: Store last validated commit to cache
@@ -89,6 +98,8 @@ jobs:
                   npx apify-test-tools get-latest-commit "${args[@]}" > ./base_commit.txt
                   echo "New last validated (base) commit: $(cat base_commit.txt)"
 
+    # Pure static checks against the repo. Needs no Apify or Slack credentials, only the npm
+    # token to install dependencies.
     unitTest:
         # TODO: only run on changes to code
         runs-on: ubuntu-latest
@@ -97,18 +108,13 @@ jobs:
                 working-directory: ${{ inputs.working-directory }}
 
         steps:
-            # A simple node script that converts secrets to env vars
-            # Use specific commit SHA to protect from someone stealing that repo
-            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-              with:
-                secrets: ${{ toJSON(secrets) }}
-
             - name: Setup repository and dependencies
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
+                  npm-token: ${{ secrets.NPM_TOKEN }}
 
             -   name: TypeScript
                 # Some repos require custom build checks, so we check if the `build-check` script exists and run it if

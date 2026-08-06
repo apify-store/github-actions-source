@@ -26,6 +26,9 @@ on:
                 default: ""
                 required: false
 
+# Secrets are read by name straight from the `secrets` context (populated by `secrets: inherit`
+# in the caller) and attached to the single step that needs them. This job never builds Actors,
+# so it never needs the APIFY_TOKEN_* Actor tokens at all.
 jobs:
     scheduledPlatformTests:
         name: Scheduled Platform tests
@@ -35,23 +38,22 @@ jobs:
             run:
                 working-directory: ${{ inputs.working-directory }}
         steps:
-            # A simple node script that converts secrets to env vars
-            # Use specific commit SHA to protect from someone stealing that repo
-            - uses: oNaiPs/secrets-to-env-action@b64e0192bc4bd2ec0682dee8696470d4866577fa
-              with:
-                secrets: ${{ toJSON(secrets) }}
-
             - name: Setup repository and dependencies
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
+                  npm-token: ${{ secrets.NPM_TOKEN }}
 
+            # `continue-on-error` lets the report step run on failure while still recording the
+            # real outcome, which the last step turns back into a job failure.
             - name: Test
+              id: test
+              continue-on-error: true
+              env:
+                  TESTER_APIFY_TOKEN: ${{ secrets.TESTER_APIFY_TOKEN }}
               run: |
-                  set +e
-                  export RUN_ALL_PLATFORM_TESTS=1
                   npx vitest ./test/platform/${{ inputs.test-files-glob || inputs.subtest }} \
                     --run \
                     --reporter=default \
@@ -60,14 +62,22 @@ jobs:
                     --maxConcurrency 20 \
                     --fileParallelism=true \
                     --maxWorkers 100
-                  return_code=$?
+
+            - name: Report test results
+              if: always()
+              env:
+                  SLACK_TOKEN_TESTS_BOT: ${{ secrets.SLACK_TOKEN_TESTS_BOT }}
+              run: |
+                  if [ ! -f ./test-output.json ]; then
+                    echo "No ./test-output.json produced, vitest failed before writing a report. Skipping."
+                    exit 0
+                  fi
                   npx apify-test-tools report-tests \
                     --report-file ./test-output.json \
                     --workspace . \
                     --workflow-name "${{ github.workflow }}" \
                     --job-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
                     --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}"
-                  exit $return_code
 
             - name: Upload Vitest JSON artifact
               uses: actions/upload-artifact@v6
@@ -75,3 +85,7 @@ jobs:
               with:
                   name: vitest-results
                   path: ./test-output.json
+
+            - name: Fail if tests failed
+              if: steps.test.outcome == 'failure'
+              run: exit 1
