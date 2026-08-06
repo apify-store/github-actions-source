@@ -30,6 +30,7 @@ jobs:
 
         steps:
             - name: Setup repository and dependencies
+              id: setup
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
@@ -38,27 +39,19 @@ jobs:
                   npm-token: ${{ secrets.NPM_TOKEN }}
 
             # The Actor tokens are named per Actor in apify-test-tools.config.json, so they can't be
-            # listed here. apify-token-env.mjs pulls just the APIFY_TOKEN_* entries out of the secrets
-            # map into this shell, and ALL_SECRETS is dropped before the npx call.
+            # listed here. run-with-apify-tokens.mjs hands the command the APIFY_TOKEN_* secrets and
+            # nothing else, so the tokens stay in this one command instead of the whole job.
             - name: Release Actors and notify
               env:
                   ALL_SECRETS: ${{ toJSON(secrets) }}
                   SLACK_TOKEN_RELEASES_BOT: ${{ secrets.SLACK_TOKEN_RELEASES_BOT }}
               run: |
-                  # Assign first so `bash -e` aborts on a script failure. `eval "$(...)"` would
-                  # silently eval an empty string and carry on without any tokens.
-                  apify_token_env="$(node "$RUNNER_TEMP/apify-token-env.mjs")"
-                  eval "$apify_token_env"
-                  unset ALL_SECRETS apify_token_env
-                  npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}" --use-docker-cache
+                  node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
+                    npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}" --use-docker-cache
 
             - name: Delete old builds
               env:
                   ALL_SECRETS: ${{ toJSON(secrets) }}
               run: |
-                  # Assign first so `bash -e` aborts on a script failure. `eval "$(...)"` would
-                  # silently eval an empty string and carry on without any tokens.
-                  apify_token_env="$(node "$RUNNER_TEMP/apify-token-env.mjs")"
-                  eval "$apify_token_env"
-                  unset ALL_SECRETS apify_token_env
-                  npx apify-test-tools delete-old-builds
+                  node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
+                    npx apify-test-tools delete-old-builds
