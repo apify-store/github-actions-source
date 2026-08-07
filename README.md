@@ -18,24 +18,35 @@ job-wide environment variables, so a secret is only visible to the step that nee
 | `SLACK_TOKEN_TESTS_BOT` / `SLACK_TOKEN_RELEASES_BOT` | the reporting and release steps only |
 
 The Actor tokens are the one set that cannot be listed in the workflow, because each Actor names its
-own token via `tokenEnvVar` in `apify-test-tools.config.json`. The `export-apify-tokens` action picks
-them out of the secrets map:
+own token via `tokenEnvVar` in `apify-test-tools.config.json`. Those steps pass
+`${{ toJSON(secrets) }}` as `ALL_SECRETS` and run the command through `scripts/run-with-apify-tokens.mjs`:
 
 ```yaml
-- name: Export Apify Actor tokens
-  uses: apify-store/github-actions-source/.github/actions/export-apify-tokens@master
-  with:
-      secrets: ${{ toJSON(secrets) }}
+- name: Build
+  env:
+      ALL_SECRETS: ${{ toJSON(secrets) }}
+  run: |
+      node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
+        npx apify-test-tools build --target-branch ...
 ```
 
-Place it **after** the setup action. That ordering is the point: `npm ci` and its postinstall scripts
-run during setup, before any Actor token exists in the environment. Pass `prefix` if a repo names its
-tokens something other than `APIFY_TOKEN*`.
+The wrapper passes only the `APIFY_TOKEN*` entries to the child and drops `ALL_SECRETS`, so neither
+`npx` nor anything under `node_modules` sees the blob. Nothing is written to `$GITHUB_ENV`, so the
+tokens stay inside that one command rather than leaking into later steps. Set `APIFY_TOKEN_PREFIX`
+to match a different naming convention.
 
-The action exports to `$GITHUB_ENV`, so the tokens are visible to the rest of the job, not just the
-next step. In `pr-build-test` that means the vitest step inherits them even though it only needs
-`TESTER_APIFY_TOKEN`. Narrowing that further would mean running build and test as separate jobs, at
-the cost of a second checkout and install.
+`scripts-path` comes from the setup action (give the step `id: setup`) and points at this repo's
+`scripts/` directory inside the runner's action checkout, so workflows can run these helpers without
+checking this repo out again. The caller's workspace holds the caller's repo, not this one.
+
+Two tidier-looking alternatives don't work, so don't reach for them:
+
+- **Exporting to `$GITHUB_ENV`** would let the steps call `npx` directly with no wrapper, but
+  `$GITHUB_ENV` applies to every later step in the job. In `pr-build-test` the vitest step runs after
+  the build, so it would inherit Actor tokens it has no use for.
+- **Returning the tokens as a step output** would be scoped correctly, but the runner refuses to set
+  an output whose value contains a registered secret. It logs `Skip output <name> since it may
+  contain secret` and leaves the output empty, so anything reading it downstream gets nothing.
 
 The `unitTest` job runs static checks and needs `NPM_TOKEN` only. No job runs `npm ci` with Apify or
 Slack credentials in scope, so a postinstall script in the dependency tree cannot read them.
@@ -44,7 +55,7 @@ Slack credentials in scope, so a postinstall script in the dependency tree canno
 These workflows are used based on branch code, there is no deployment. So once you merge the code, it will be running in production.
 
 Because of that, the `uses:` refs below point at `@master`. To test a change to the composite action
-or to `apify-token-env.mjs`, temporarily repoint those refs at your branch in every workflow, and
+or to `scripts/run-with-apify-tokens.mjs`, temporarily repoint those refs at your branch in every workflow, and
 change them back before merging.
 
 ### Testing

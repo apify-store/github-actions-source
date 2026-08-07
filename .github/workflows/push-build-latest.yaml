@@ -30,6 +30,7 @@ jobs:
 
         steps:
             - name: Setup repository and dependencies
+              id: setup
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
@@ -37,18 +38,20 @@ jobs:
                   additional-working-directory: ${{ inputs.additional-working-directory }}
                   npm-token: ${{ secrets.NPM_TOKEN }}
 
-            # Runs after the setup action on purpose: `npm ci` and its postinstall scripts execute
-            # there, before any Actor token exists in the environment.
-            - name: Export Apify Actor tokens
-              uses: apify-store/github-actions-source/.github/actions/export-apify-tokens@master
-              with:
-                  secrets: ${{ toJSON(secrets) }}
-
+            # The Actor tokens are named per Actor in apify-test-tools.config.json, so they can't be
+            # listed here. run-with-apify-tokens.mjs hands the command the APIFY_TOKEN_* secrets and
+            # nothing else, so the tokens stay in this one command instead of the whole job.
             - name: Release Actors and notify
               env:
+                  ALL_SECRETS: ${{ toJSON(secrets) }}
                   SLACK_TOKEN_RELEASES_BOT: ${{ secrets.SLACK_TOKEN_RELEASES_BOT }}
               run: |
-                  npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}" --use-docker-cache
+                  node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
+                    npx apify-test-tools release --push-event-path ${{ github.event_path }} --release-slack-channel "#delivery-public-actors" --report-slack-channel "${{ inputs.report-slack-channel || format('#notif-{0}', github.event.repository.name) }}" --use-docker-cache
 
             - name: Delete old builds
-              run: npx apify-test-tools delete-old-builds
+              env:
+                  ALL_SECRETS: ${{ toJSON(secrets) }}
+              run: |
+                  node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
+                    npx apify-test-tools delete-old-builds
