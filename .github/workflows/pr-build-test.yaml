@@ -33,7 +33,6 @@ jobs:
                 working-directory: ${{ inputs.working-directory }}
         steps:
             - name: Setup repository and dependencies
-              id: setup
             # For testing, you have to temporarily change the branch
               uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
               with:
@@ -52,13 +51,15 @@ jobs:
                 # This is needed to force overriding the cache with new entry at the end
                 restore-keys: base_commit-
 
-            # The Actor tokens are named per Actor in apify-test-tools.config.json, so they can't be
-            # listed here. run-with-apify-tokens.mjs hands the build the APIFY_TOKEN_* secrets and
-            # nothing else, so the tokens stay in this one command instead of the whole job.
+            # Runs after the setup action on purpose: `npm ci` and its postinstall scripts execute
+            # there, before any Actor token exists in the environment.
+            - name: Export Apify Actor tokens
+              uses: apify-store/github-actions-source/.github/actions/export-apify-tokens@master
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+
             - name: Build
               id: build
-              env:
-                  ALL_SECRETS: ${{ toJSON(secrets) }}
               run: |
                   base_commit=$(cat base_commit.txt 2>/dev/null || echo "")
                   echo "Last validated (base) commit to be used for build & test: $base_commit"
@@ -68,12 +69,12 @@ jobs:
                     --use-docker-cache
                   )
                   [ -n "$base_commit" ] && args+=(--base-commit "$base_commit")
-                  actor_builds=$(node "${{ steps.setup.outputs.scripts-path }}/run-with-apify-tokens.mjs" \
-                    npx apify-test-tools build "${args[@]}")
+                  actor_builds=$(npx apify-test-tools build "${args[@]}")
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
 
-            # Runs the repo's test code and its whole import graph, so it gets the tester token only.
-            # The Actor tokens from the build step can modify and delete Actors and never appear here.
+            # The tester token is the only credential this step needs. It does still inherit the
+            # Actor tokens, because the export step above writes them to $GITHUB_ENV for the rest
+            # of the job. Closing that would mean splitting build and test into separate jobs.
             - name: Test
               env:
                   ACTOR_BUILDS: ${{ steps.build.outputs.actor_builds }}

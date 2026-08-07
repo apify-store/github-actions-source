@@ -1,0 +1,23 @@
+name: Export Apify Actor tokens
+description: >-
+    Exports the APIFY_TOKEN* secrets as environment variables for the remaining steps of the job.
+    Run it after dependencies are installed, so npm and its postinstall scripts never see them.
+inputs:
+    secrets:
+        description: 'Pass `${{ toJSON(secrets) }}`. Only the Actor tokens are exported from it.'
+        required: true
+    prefix:
+        description: >-
+            Name prefix identifying Actor tokens. They can't be listed instead, because each Actor
+            names its own via `tokenEnvVar` in apify-test-tools.config.json.
+        required: false
+        default: APIFY_TOKEN
+
+runs:
+    using: "composite"
+    steps:
+        - shell: bash
+          env:
+              ALL_SECRETS: ${{ inputs.secrets }}
+              APIFY_TOKEN_PREFIX: ${{ inputs.prefix }}
+          run: node "$GITHUB_ACTION_PATH/../../../scripts/export-apify-tokens.mjs"

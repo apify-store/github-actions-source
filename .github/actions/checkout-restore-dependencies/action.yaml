@@ -16,14 +16,6 @@ inputs:
             never reaches the build or test steps. Use a read-only token.
         required: false
 
-outputs:
-    scripts-path:
-        description: >-
-            Absolute path to this repo's scripts/ directory in the runner's action checkout.
-            Lets calling workflows run helpers like run-with-apify-tokens.mjs without checking
-            this repo out again, since the workspace holds the caller's repo, not this one.
-        value: ${{ steps.scripts-path.outputs.path }}
-
 # Sets common steps and ensure we use cached node_modules
 # IF YOU TEST CHANGES IN THIS, YOU HAVE TO CHANGE THE BRANCH OF THIS IN ALL WORKFLOWS AND NOT FORGET TO CHANGE IT BACK BEFORE MERGE!!!
 runs:
@@ -42,14 +34,6 @@ runs:
           uses: actions/setup-node@v4
           with:
               node-version: 24
-
-        # `github.action_path` only resolves inside this composite action, but the steps that use
-        # scripts/ live in the calling workflows. Resolving it once here and exposing it as an
-        # output keeps the scripts readable in place, with no copy into a temp directory.
-        - name: Resolve scripts path
-          id: scripts-path
-          shell: bash
-          run: echo "path=$(cd "${{ github.action_path }}/../../.." && pwd)/scripts" >> "$GITHUB_OUTPUT"
 
         - name: Cache dependencies npm
           id: check-dependencies-cache
