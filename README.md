@@ -13,13 +13,14 @@ job-wide environment variables, so a secret is only visible to the step that nee
 | Secret | Reaches |
 | --- | --- |
 | `NPM_TOKEN` | dependency install steps only, as both `NPM_TOKEN` and `NODE_AUTH_TOKEN`. Use a read-only token: npm granular tokens can be read-only, classic automation tokens can publish. |
-| `APIFY_TOKEN_*` | the `build`, `release`, and `delete-old-builds` steps only |
+| the Actor tokens named by `tokenEnvVar` in `apify-test-tools.config.json` | the `build`, `release`, and `delete-old-builds` steps only |
 | `TESTER_APIFY_TOKEN` | the vitest step only |
 | `SLACK_TOKEN_TESTS_BOT` / `SLACK_TOKEN_RELEASES_BOT` | the reporting and release steps only |
 
 The Actor tokens are the one set that cannot be listed in the workflow, because each Actor names its
 own token via `tokenEnvVar` in `apify-test-tools.config.json`. Those steps pass
-`${{ toJSON(secrets) }}` as `ALL_SECRETS` and run the command through `scripts/run-with-apify-tokens.mjs`:
+`${{ toJSON(secrets) }}` as `ALL_SECRETS` and run the command through `scripts/run-with-apify-tokens.mjs`,
+which reads that same config file to decide which secrets to pass on:
 
 ```yaml
 - name: Build
@@ -30,10 +31,15 @@ own token via `tokenEnvVar` in `apify-test-tools.config.json`. Those steps pass
         npx apify-test-tools build --target-branch ...
 ```
 
-The wrapper passes only the `APIFY_TOKEN*` entries to the child and drops `ALL_SECRETS`, so neither
-`npx` nor anything under `node_modules` sees the blob. Nothing is written to `$GITHUB_ENV`, so the
-tokens stay inside that one command rather than leaking into later steps. Set `APIFY_TOKEN_PREFIX`
-to match a different naming convention.
+The wrapper passes only the tokens the config declares and drops `ALL_SECRETS`, so neither `npx` nor
+anything under `node_modules` sees the blob. Nothing is written to `$GITHUB_ENV`, so the tokens stay
+inside that one command rather than leaking into later steps. Reading the same file `apify-test-tools`
+reads means the two can't drift, and a secret that merely looks like an Actor token is not passed
+just because of its name.
+
+A token the config declares but the repo hasn't set is a warning, not a failure: a repo can carry an
+Actor whose token isn't configured and still build fine as long as that Actor never changes, and
+`apify-test-tools` raises a precise error naming the Actor at the point it actually needs the token.
 
 `scripts-path` comes from the setup action (give the step `id: setup`) and points at this repo's
 `scripts/` directory inside the runner's action checkout, so workflows can run these helpers without

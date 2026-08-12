@@ -52,9 +52,9 @@ jobs:
                 # This is needed to force overriding the cache with new entry at the end
                 restore-keys: base_commit-
 
-            # The Actor tokens are named per Actor in apify-test-tools.config.json, so they can't be
-            # listed here. run-with-apify-tokens.mjs hands the build the APIFY_TOKEN_* secrets and
-            # nothing else, so the tokens stay in this one command instead of the whole job.
+            # run-with-apify-tokens.mjs reads the token names from `tokenEnvVar` in
+            # apify-test-tools.config.json and hands the build those secrets and nothing else, so the
+            # tokens stay in this one command instead of the whole job.
             - name: Build
               id: build
               env:

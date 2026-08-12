@@ -28,7 +28,7 @@ on:
 
 # Secrets are read by name straight from the `secrets` context (populated by `secrets: inherit`
 # in the caller) and attached to the single step that needs them. This job never builds Actors,
-# so it never needs the APIFY_TOKEN_* Actor tokens at all.
+# so it never needs the Actor tokens at all.
 jobs:
     scheduledPlatformTests:
         name: Scheduled Platform tests
