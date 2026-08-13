@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Runs a command with only the Apify Actor tokens in its environment.
+// Runs apify-test-tools and passes it only secrets needed for the Actors, no other secrets are leaked.
 //
 //     node scripts/run-with-apify-tokens.mjs npx apify-test-tools build --target-branch ...
 //
@@ -8,9 +8,6 @@
 // the two can't drift. Everything else in the secrets map (npm, Slack, GitHub, anything else the
 // repo holds) is left out, and ALL_SECRETS itself is dropped, so the blob never reaches npx or
 // anything under node_modules.
-//
-// Nothing is written to $GITHUB_ENV, so the tokens stay inside this one command instead of leaking
-// into later steps of the job.
 //
 // The command runs without a shell, so branch names and other interpolated arguments are passed
 // through as literal argv entries.

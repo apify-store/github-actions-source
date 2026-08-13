@@ -39,6 +39,7 @@ jobs:
               with:
                   working-directory: ${{ inputs.working-directory }}
                   additional-working-directory: ${{ inputs.additional-working-directory }}
+                  # Some repos use private npm packages, they need to pass NPM_TOKEN secret to this workflow
                   npm-token: ${{ secrets.NPM_TOKEN }}
 
             - name: Pick last validated commit from cache
@@ -52,9 +53,9 @@ jobs:
                 # This is needed to force overriding the cache with new entry at the end
                 restore-keys: base_commit-
 
-            # run-with-apify-tokens.mjs reads the token names from `tokenEnvVar` in
-            # apify-test-tools.config.json and hands the build those secrets and nothing else, so the
-            # tokens stay in this one command instead of the whole job.
+            # run-with-apify-tokens.mjs reads the token names from in apify-test-tools.config.json
+            # and hands the build those secrets and nothing else, so the tokens stay in this one command instead of the whole job.
+            # The library never sees secrets it doesn't need
             - name: Build
               id: build
               env:
@@ -73,7 +74,6 @@ jobs:
                   echo "actor_builds=$actor_builds" | tee -a $GITHUB_OUTPUT
 
             # Runs the repo's test code and its whole import graph, so it gets the tester token only.
-            # The Actor tokens from the build step can modify and delete Actors and never appear here.
             - name: Test
               env:
                   ACTOR_BUILDS: ${{ steps.build.outputs.actor_builds }}

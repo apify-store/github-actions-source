@@ -38,9 +38,9 @@ jobs:
                   additional-working-directory: ${{ inputs.additional-working-directory }}
                   npm-token: ${{ secrets.NPM_TOKEN }}
 
-            # run-with-apify-tokens.mjs reads the token names from `tokenEnvVar` in
-            # apify-test-tools.config.json and hands the command those secrets and nothing else, so
-            # the tokens stay in this one command instead of the whole job.
+            # run-with-apify-tokens.mjs reads the token names from in apify-test-tools.config.json
+            # and hands the build those secrets and nothing else, so the tokens stay in this one command instead of the whole job.
+            # The library never sees secrets it doesn't need
             - name: Release Actors and notify
               env:
                   ALL_SECRETS: ${{ toJSON(secrets) }}

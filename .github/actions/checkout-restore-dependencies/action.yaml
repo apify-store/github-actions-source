@@ -46,6 +46,7 @@ runs:
         # `github.action_path` only resolves inside this composite action, but the steps that use
         # scripts/ live in the calling workflows. Resolving it once here and exposing it as an
         # output keeps the scripts readable in place, with no copy into a temp directory.
+        # This is not a good place for this but me and Claude didn't figure out a better way.
         - name: Resolve scripts path
           id: scripts-path
           shell: bash
