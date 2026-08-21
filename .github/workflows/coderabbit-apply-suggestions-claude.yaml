@@ -1,0 +1,100 @@
+name: "CodeRabbit: apply review suggestions with Claude"
+
+# Reusable workflow that runs Claude Code after CodeRabbit finishes reviewing a pull request.
+# Claude reads CodeRabbit's review comments and suggestions, implements the fixes it agrees
+# with, then pushes the result to a new branch (branched off the PR's head) and comments on
+# the original PR with a link to it. It does not push to the original PR branch and does not
+# open a pull request — the new branch is left for a human to review and merge manually.
+#
+# Trigger: the calling workflow must run on `pull_request_review`, since that's how CodeRabbit
+# signals it has finished reviewing.
+#
+# Example usage:
+#
+# on:
+#     pull_request_review:
+#         types: [submitted]
+#
+# jobs:
+#     coderabbit-fix:
+#         uses: apify-store/github-actions-source/.github/workflows/coderabbit-apply-suggestions-claude.yaml@master
+#         permissions:
+#             contents: write
+#             pull-requests: write
+#             id-token: write
+#         secrets: inherit
+
+on:
+    workflow_call:
+        inputs:
+            model:
+                required: false
+                type: string
+                default: sonnet
+                description: Claude model to use for applying fixes
+            branch_prefix:
+                required: false
+                type: string
+                default: coderabbit-fixes
+                description: Prefix used for the new branch name (new branch is `<prefix>/pr-<number>-<run_id>`)
+            prompt:
+                required: false
+                type: string
+                default: |
+                    CodeRabbit just finished reviewing the pull request identified in the system prompt. Read its review and inline suggestions with `gh pr view <number> --comments` and `gh api repos/{owner}/{repo}/pulls/<number>/comments`, focusing on comments from `coderabbitai[bot]`.
+
+                    For each suggestion that is a genuine, safe improvement (bug fix, correctness issue, clear simplification), implement it. Skip suggestions that are subjective style preferences you disagree with, out of scope, or that you're not confident about — do not guess.
+
+                    You are already on a new branch created off the PR's head commit. Commit your changes and push this branch to the remote. Do not push to the original PR branch, and do not open a pull request — just push the new branch.
+
+                    After pushing, post a comment on the original PR (with `gh pr comment <number> --body ...`) linking to the new branch, e.g. `https://github.com/<owner>/<repo>/tree/<branch>`, so reviewers know where to find the fix.
+
+                    If you made no changes because none of CodeRabbit's suggestions warranted a fix, do not push anything and do not comment.
+                description: Prompt given to Claude for applying CodeRabbit's suggestions.
+        secrets:
+            ANTHROPIC_API_KEY:
+                required: true
+                description: Claude API key
+
+jobs:
+    apply-suggestions:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.user.login == 'coderabbitai[bot]'
+        permissions:
+            contents: write
+            pull-requests: write
+            id-token: write
+        steps:
+            - name: Checkout PR branch
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.pull_request.head.ref }}
+                  fetch-depth: 1
+
+            - name: Create fix branch
+              id: branch
+              run: |
+                  BRANCH_NAME="${{ inputs.branch_prefix }}/pr-${{ github.event.pull_request.number }}-${{ github.run_id }}"
+                  git checkout -b "$BRANCH_NAME"
+                  echo "name=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
+
+            - name: Run Claude Code
+              id: claude
+              uses: anthropics/claude-code-action@v1
+              with:
+                  prompt: ${{ inputs.prompt }}
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  use_commit_signing: true
+                  allowed_bots: coderabbitai
+                  claude_args: |
+                      --model ${{ inputs.model }}
+                      --dangerously-skip-permissions
+                      --append-system-prompt "The pull request under review is #${{ github.event.pull_request.number }} in this repository. You are already checked out on branch ${{ steps.branch.outputs.name }}, created off that PR's head commit — commit and push your fixes there."
+
+            - name: Upload Claude output (for debugging)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: claude-output-coderabbit-fix
+                  path: /home/runner/work/_temp/claude-execution-output.json

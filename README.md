@@ -77,6 +77,7 @@ These workflows depend on https://github.com/apify-projects/apify-test-tools. Th
 - pr-build-test - On PR updates, builds 0.99 versions and tests on them.
 - push-build-latest - This releases master branch to latest Actor version. This almost always happens after PR is merged (since we forbid direct push)
 - claude - This makes claude being able to respond on github, this has several different triggers its capable to work with.
+- coderabbit-apply-suggestions-claude - After CodeRabbit finishes reviewing a PR, Claude implements the suggestions it agrees with, pushes them to a new branch (no PR opened), and comments on the original PR with a link to it.
 
 ### Possible TODOs
 - Install latest apify-test-tools automatically in this workflow
