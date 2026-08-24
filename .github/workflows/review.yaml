@@ -20,6 +20,10 @@ on:
             additional-working-directory:
                 type: string
                 required: false
+        secrets:
+            ANTHROPIC_API_KEY:
+                required: true
+                description: Claude API key
 
 jobs:
     review:
@@ -37,12 +41,13 @@ jobs:
             issues: "write"
             pull-requests: "write"
         steps:
-            - name: Setup repository and dependencies
-            # For testing, you have to temporarily change the branch
-              uses: apify-store/github-actions-source/.github/actions/checkout-restore-dependencies@master
+            - name: Checkout Repository
+              uses: actions/checkout@v5
               with:
-                  working-directory: ${{ inputs.working-directory }}
-                  additional-working-directory: ${{ inputs.additional-working-directory }}
+                fetch-depth: 0
+                # We want to test our branch, not GitHub's fake merge commit (we must test that before merging anyway)
+                # head_ref must be used for pull_request but for push and schedule events we have to use ref to get the branch name
+                ref: ${{ github.head_ref || github.ref }}
 
             - name: "Review PR against guidelines"
               id: "review"
@@ -56,7 +61,7 @@ jobs:
                   track_progress: true
                   claude_args: |
                     --model "${{ inputs.model }}"
-                    --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+                    --allowedTools "mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_review_comments,mcp__github__get_issue_comments,mcp__github__get_file_contents,mcp__github__create_pending_pull_request_review,mcp__github__add_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__delete_pending_pull_request_review,mcp__github__add_issue_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/*/pulls/*/reviews*:*)"
                   prompt: |-
                     REPO: ${{ github.repository }} 
                     PR NUMBER: ${{ github.event.pull_request.number }} 
@@ -88,7 +93,14 @@ jobs:
 
                     ### Step 1: Data Gathering and Analysis
 
-                    1. **Parse Inputs:** Ingest and parse all changes from the Pull request and the `CONTRIBUTING.md` file.
+                    1. **Parse Inputs:** Ingest and parse all changes from the Pull request and the `CONTRIBUTING.md` file. Use these tools, always passing `owner` and `repo` from REPO above and `pullNumber`/`issue_number` = PR NUMBER:
+
+                        - `mcp__github__get_pull_request` — PR title, description, base/head refs and state.
+                        - `mcp__github__get_pull_request_diff` — the unified diff you review against.
+                        - `mcp__github__get_pull_request_files` — changed files with per-file patches, to map findings to a `path` and to the correct line numbers.
+                        - `mcp__github__get_pull_request_reviews` and `mcp__github__get_pull_request_review_comments` — reviews and inline threads already on the PR, including their resolution state.
+                        - `mcp__github__get_issue_comments` — the PR conversation (non-review comments).
+                        - `Read`, `Grep` and `Glob` on the checked-out working tree (the PR head is checked out) for `CONTRIBUTING.md` and for context around a change; `mcp__github__get_file_contents` only if you need a file at a ref that is not checked out.
 
                         IMPORTANT: While analyzing `CONTRIBUTING.md`, do **not** visit, fetch, infer, or evaluate the following external links and their content:
                             - Development Lifecycle guide in Notion
@@ -96,7 +108,11 @@ jobs:
                         You may reference these links by name as part of your analysis, but their content must not be accessed or interpreted.
                         Other links in the file may be considered normally.
 
-                    2. **Analyze Changes against Guidelines and Best Practices:** Meticulously review the changes and the pull request metadata. Compare these changes against the guidelines in `CONTRIBUTING.md` and the following critical scenarios/best practices:
+                        Read up on the PR description and discussion to understand what issues have been raised already or if you have already reviewed the PR.
+
+                    2. **Analyze new Changes against Guidelines and Best Practices:** Meticulously review the changes and the pull request metadata. Compare these changes against the guidelines in `CONTRIBUTING.md` and the following critical scenarios/best practices:
+
+                        If you have already reviewed the PR, check new changes to see if they address any of the issues raised in the discussion.
 
                         IMPORTANT: Any rule or recommendation in `CONTRIBUTING.md` takes precedence. If a check below conflicts with it, merge the guidance and produce feedback that reflects the union of both requirements rather than ignoring either.
 
@@ -151,9 +167,11 @@ jobs:
 
                     1. **Silence Rule:** If no issues, risks, or noteworthy observations are found during analysis, do **not** create or submit any comments, summaries, or reviews. Simply exit without producing any output or review activity.
 
-                    2. **Create Pending Review:** Set up a pending review. Ignore errors like "can only have one pending review per pull request" and proceed to the next step.
+                    2. **Create Pending Review:** Call `mcp__github__create_pending_pull_request_review` with `owner`, `repo` and `pullNumber`. If it fails with "can only have one pending review per pull request", ignore it and keep going and add your comments to the existing pending review.
 
-                    3. **Add Comments and Suggestions:** For each formulated review comment, add a comment or suggested edit to the pending review.
+                    3. **Add Comments and Suggestions:** For each formulated review comment, add it to the pending review with `mcp__github__add_comment_to_pending_review`.
+
+                        A rejected comment (bad `path`, or a `line` outside the diff) does not abort the review: fix the target and retry once, and if it still fails, drop that comment and fold its content into the summary.
 
                         3a. When there is a code suggestion (preferred for minor fixes, e.g., in a `CONTRIBUTING.md` file itself if it were part of the diff), structure the comment payload using this exact template:
 
@@ -171,7 +189,7 @@ jobs:
                             {{SEVERITY}} {{COMMENT_TEXT}}
                             </COMMENT>
 
-                    4. **Submit Final Review:** Submit the pending review with a summary comment. **DO NOT** approve the pull request. **DO NOT** request changes. The summary comment **MUST** use this exact markdown format:
+                    4. **Submit Final Review:** Call `mcp__github__submit_pending_pull_request_review` with `owner`, `repo`, `pullNumber`, `event: "COMMENT"` and `body` set to the summary below. `event` **MUST** be `COMMENT`: **DO NOT** approve the pull request (`APPROVE`) and **DO NOT** request changes (`REQUEST_CHANGES`). If every comment was rejected in Step 3 and you have nothing worth saying, call `mcp__github__delete_pending_pull_request_review` instead of submitting an empty review. The summary comment **MUST** use this exact markdown format:
 
                         <SUMMARY>
                         ## 📋 Workflow & Quality Assurance Summary
@@ -180,8 +198,18 @@ jobs:
 
                         </SUMMARY>
 
+                    5. **Fallback:** Only if the pending review flow above failed and nothing was posted, submit the whole review in a single call instead. Write the payload to a file and pass it to `gh`:
+
+                        ```
+                        gh api repos/{REPO}/pulls/{PR_NUMBER}/reviews --method POST --input review.json
+                        ```
+
+                        `review.json` holds `{"event": "COMMENT", "body": "<the summary>", "comments": [{"path": ..., "line": ..., "side": ..., "body": ...}]}`, one entry per comment, same payload templates as Step 3. Use this path **at most once**, and never after a review was already submitted — a duplicate review is worse than a missing one.
+
+                    6. **Escalation:** If the fallback also failed and your findings are still unposted, call `mcp__github__add_issue_comment` with `issue_number` = PR NUMBER and a body that tags `@JuanGalilea`, names the tools that failed and quotes the errors verbatim, so the action can be fixed. Include your findings in that comment so the review is not lost.
+
                     -----
 
                     ## Final Instructions
 
-                    Remember, you are running in a virtual machine and no one reviewing your output. Your review must be posted to GitHub using the MCP tools to create a pending review, add comments to the pending review, and submit the pending review.
+                    Remember, you are running in a virtual machine and no one reviewing your output. Your review must be posted to GitHub with `mcp__github__create_pending_pull_request_review`, then `mcp__github__add_comment_to_pending_review` for each comment, then `mcp__github__submit_pending_pull_request_review`. Never leave a pending review unsubmitted: either submit it or delete it before you finish.
