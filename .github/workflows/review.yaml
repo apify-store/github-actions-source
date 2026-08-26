@@ -58,7 +58,12 @@ jobs:
                   PR_NUMBER: "${{ github.event.pull_request.number }}"
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  track_progress: true
+                  # Deliberately left off (defaults to false). track_progress: true forces the
+                  # action's tag mode, which posts its own PR comment and injects instructions
+                  # ("never create new comments", "communicate exclusively by editing your single
+                  # comment", "display the todo list as a checklist") that fight the review flow
+                  # below, so every review landed twice plus a step checklist. Agent mode posts
+                  # nothing itself; the GitHub review is the only output.
                   claude_args: |
                     --model "${{ inputs.model }}"
                     --allowedTools "mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_review_comments,mcp__github__get_issue_comments,mcp__github__get_file_contents,mcp__github__create_pending_pull_request_review,mcp__github__add_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__delete_pending_pull_request_review,mcp__github__add_issue_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/*/pulls/*/reviews*:*)"
