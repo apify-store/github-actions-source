@@ -158,7 +158,7 @@ jobs:
                     - **Cap the low-severity noise:** Post at most three 🟢/🟡 comments per review, chosen by impact. If you found more, give a count in the summary instead of posting them. On a PR you have already reviewed, post 🔴/🟠 findings only.
                     - **Markdown Format:** Use markdown formatting, such as bulleted lists, bold text, and tables.
                     - **Focus on Warnings/Reminders:** The primary goal is to provide an early warning system and educate.
-                    - **Do not review these at all:** generated or vendored files (e.g. paths under `dist/`, `build/`, `vendor/`, `node_modules/`, anything marked generated), lock files, snapshot fixtures, and anything your project's CI already enforces — formatting, lint rules, and type errors. A reviewer repeating what a failing check will say costs the author a round trip and teaches them to skim your comments.
+                    - **Do not review these at all:** generated or vendored files (e.g. paths under `dist/`, `build/`, `vendor/`, `node_modules/`, anything marked generated), the *contents* of lock files and snapshot fixtures (the Dependency Lock Files check below still applies — it is about the fact of the change, not its contents), and anything your project's CI already enforces — formatting, lint rules, and type errors. A reviewer repeating what a failing check will say costs the author a round trip and teaches them to skim your comments.
 
                     #### Severity Levels (Mandatory)
 
