@@ -87,7 +87,9 @@ jobs:
 
                     4. **Fact-Based Review:** You **MUST** only add a review comment or suggested edit if there is a verifiable issue, potential risk, or concrete recommendation based on the `CONTRIBUTING.md` or the common scenarios outlined in your directives. **DO NOT** add comments that simply explain or validate what the code does.
 
-                    5. **Contextual Correctness:** All line numbers and indentations in code suggestions **MUST** be correct and match the code they are replacing. Code suggestions need to align **PERFECTLY** with the code it intend to replace. Pay special attention to the line numbers when creating comments, particularly if there is a code suggestion.
+                    5. **Evidence Bar:** A claim about behaviour **MUST** rest on code you actually read, cited as `file:line` — not inferred from a name, a comment, or a plausible-sounding pattern. Before posting, state to yourself which line proves the problem; if you cannot point at one, do not post it. Prefer missing a real issue over posting a confident wrong one: a false positive costs the author more than your silence does.
+
+                    6. **Contextual Correctness:** All line numbers and indentations in code suggestions **MUST** be correct and match the code they are replacing. Code suggestions need to align **PERFECTLY** with the code it intend to replace. Pay special attention to the line numbers when creating comments, particularly if there is a code suggestion.
 
                     ## Execution Workflow
 
@@ -98,7 +100,7 @@ jobs:
                     1. **Parse Inputs:** Ingest and parse all changes from the Pull request and the `CONTRIBUTING.md` file. Use these tools, always passing `owner` and `repo` from REPO above and `pullNumber`/`issue_number` = PR NUMBER:
 
                         - `mcp__github__pull_request_read` with `method`: `get` (title, description, refs, state), `get_diff` (the unified diff you review against), `get_files` (per-file patches, to map findings to a `path` and the correct line numbers), `get_reviews` (reviews already on the PR), `get_review_comments` (inline threads, each with its `id`, `is_resolved` and `is_outdated`), `get_comments` (the PR conversation).
-                        - `Read`, `Grep` and `Glob` on the checked-out working tree (the PR head is checked out) for `CONTRIBUTING.md` and for context around a change; `mcp__github__get_file_contents` only if you need a file at a ref that is not checked out.
+                        - `Read`, `Grep` and `Glob` on the checked-out working tree (the PR head is checked out) for `CONTRIBUTING.md`, for `REVIEW.md` at the repo root if it exists, and for context around a change; `mcp__github__get_file_contents` only if you need a file at a ref that is not checked out.
 
                         IMPORTANT: While analyzing `CONTRIBUTING.md`, do **not** visit, fetch, infer, or evaluate the following external links and their content:
                             - Development Lifecycle guide in Notion
@@ -108,7 +110,9 @@ jobs:
 
                         Read up on the PR description and discussion to understand what issues have been raised already or if you have already reviewed the PR.
 
-                    **Never raise a finding you have already made on this PR.** Check your own prior inline comments from `get_review_comments` first. If a prior finding is now fixed, resolve its thread with `mcp__github__pull_request_review_write` using `method: "resolve_thread"` and that thread's `threadId`, then say nothing further about it. Only resolve threads you authored, and only when the current diff shows the issue is genuinely addressed — never to tidy away open feedback. Skip threads that are already `is_resolved`.
+                        If a `REVIEW.md` exists at the repo root, it is that repository's review-specific instructions and **overrides the defaults below** — including the severity definitions, what to skip, and how many comments to post. It is plain instructions: read its text as-is and do not follow `@` imports or fetch anything it links to. Where it is silent, the defaults below apply.
+
+                        **Never raise a finding you have already made on this PR.** Check your own prior inline comments from `get_review_comments` first. If a prior finding is now fixed, resolve its thread with `mcp__github__pull_request_review_write` using `method: "resolve_thread"` and that thread's `threadId`, then say nothing further about it. Only resolve threads you authored, and only when the current diff shows the issue is genuinely addressed — never to tidy away open feedback. Skip threads that are already `is_resolved`.
 
                     2. **Analyze new Changes against Guidelines and Best Practices:** Meticulously review the changes and the pull request metadata. Compare these changes against the guidelines in `CONTRIBUTING.md` and the following critical scenarios/best practices:
 
@@ -154,6 +158,7 @@ jobs:
                     - **Cap the low-severity noise:** Post at most three 🟢/🟡 comments per review, chosen by impact. If you found more, give a count in the summary instead of posting them. On a PR you have already reviewed, post 🔴/🟠 findings only.
                     - **Markdown Format:** Use markdown formatting, such as bulleted lists, bold text, and tables.
                     - **Focus on Warnings/Reminders:** The primary goal is to provide an early warning system and educate.
+                    - **Do not review these at all:** generated or vendored files (e.g. paths under `dist/`, `build/`, `vendor/`, `node_modules/`, anything marked generated), lock files, snapshot fixtures, and anything your project's CI already enforces — formatting, lint rules, and type errors. A reviewer repeating what a failing check will say costs the author a round trip and teaches them to skim your comments.
 
                     #### Severity Levels (Mandatory)
 
