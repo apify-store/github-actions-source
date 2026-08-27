@@ -58,10 +58,12 @@ jobs:
                   PR_NUMBER: "${{ github.event.pull_request.number }}"
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  track_progress: true
+                  # Do not set track_progress: it forces tag mode, which posts its own PR
+                  # comment and duplicates the review into it.
                   claude_args: |
                     --model "${{ inputs.model }}"
-                    --allowedTools "mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,mcp__github__get_pull_request_reviews,mcp__github__get_pull_request_review_comments,mcp__github__get_issue_comments,mcp__github__get_file_contents,mcp__github__create_pending_pull_request_review,mcp__github__add_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__delete_pending_pull_request_review,mcp__github__add_issue_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/*/pulls/*/reviews*:*)"
+                    --mcp-config '{"mcpServers":{"github":{"command":"docker","args":["run","-i","--rm","-e","GITHUB_PERSONAL_ACCESS_TOKEN","ghcr.io/github/github-mcp-server@sha256:fbec75de11c255213fa08d80fb166abe73d851fff631c51c0079872967720699"],"env":{"GITHUB_PERSONAL_ACCESS_TOKEN":"${GITHUB_TOKEN}"}}}}'
+                    --allowedTools "mcp__github__pull_request_read,mcp__github__pull_request_review_write,mcp__github__add_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__delete_pending_pull_request_review,mcp__github__get_file_contents,mcp__github__add_issue_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/*/pulls/*/reviews*:*)"
                   prompt: |-
                     REPO: ${{ github.repository }} 
                     PR NUMBER: ${{ github.event.pull_request.number }} 
@@ -85,7 +87,9 @@ jobs:
 
                     4. **Fact-Based Review:** You **MUST** only add a review comment or suggested edit if there is a verifiable issue, potential risk, or concrete recommendation based on the `CONTRIBUTING.md` or the common scenarios outlined in your directives. **DO NOT** add comments that simply explain or validate what the code does.
 
-                    5. **Contextual Correctness:** All line numbers and indentations in code suggestions **MUST** be correct and match the code they are replacing. Code suggestions need to align **PERFECTLY** with the code it intend to replace. Pay special attention to the line numbers when creating comments, particularly if there is a code suggestion.
+                    5. **Evidence Bar:** A claim about behaviour **MUST** rest on code you actually read, cited as `file:line` — not inferred from a name, a comment, or a plausible-sounding pattern. Before posting, state to yourself which line proves the problem; if you cannot point at one, do not post it. Prefer missing a real issue over posting a confident wrong one: a false positive costs the author more than your silence does.
+
+                    6. **Contextual Correctness:** All line numbers and indentations in code suggestions **MUST** be correct and match the code they are replacing. Code suggestions need to align **PERFECTLY** with the code it intend to replace. Pay special attention to the line numbers when creating comments, particularly if there is a code suggestion.
 
                     ## Execution Workflow
 
@@ -95,12 +99,8 @@ jobs:
 
                     1. **Parse Inputs:** Ingest and parse all changes from the Pull request and the `CONTRIBUTING.md` file. Use these tools, always passing `owner` and `repo` from REPO above and `pullNumber`/`issue_number` = PR NUMBER:
 
-                        - `mcp__github__get_pull_request` — PR title, description, base/head refs and state.
-                        - `mcp__github__get_pull_request_diff` — the unified diff you review against.
-                        - `mcp__github__get_pull_request_files` — changed files with per-file patches, to map findings to a `path` and to the correct line numbers.
-                        - `mcp__github__get_pull_request_reviews` and `mcp__github__get_pull_request_review_comments` — reviews and inline threads already on the PR, including their resolution state.
-                        - `mcp__github__get_issue_comments` — the PR conversation (non-review comments).
-                        - `Read`, `Grep` and `Glob` on the checked-out working tree (the PR head is checked out) for `CONTRIBUTING.md` and for context around a change; `mcp__github__get_file_contents` only if you need a file at a ref that is not checked out.
+                        - `mcp__github__pull_request_read` with `method`: `get` (title, description, refs, state), `get_diff` (the unified diff you review against), `get_files` (per-file patches, to map findings to a `path` and the correct line numbers), `get_reviews` (reviews already on the PR), `get_review_comments` (inline threads, each with its `id`, `is_resolved` and `is_outdated`), `get_comments` (the PR conversation).
+                        - `Read`, `Grep` and `Glob` on the checked-out working tree (the PR head is checked out) for `CONTRIBUTING.md`, for `REVIEW.md` at the repo root if it exists, and for context around a change; `mcp__github__get_file_contents` only if you need a file at a ref that is not checked out.
 
                         IMPORTANT: While analyzing `CONTRIBUTING.md`, do **not** visit, fetch, infer, or evaluate the following external links and their content:
                             - Development Lifecycle guide in Notion
@@ -109,6 +109,10 @@ jobs:
                         Other links in the file may be considered normally.
 
                         Read up on the PR description and discussion to understand what issues have been raised already or if you have already reviewed the PR.
+
+                        If a `REVIEW.md` exists at the repo root, it is that repository's review-specific instructions and **overrides the defaults below** — including the severity definitions, what to skip, and how many comments to post. It is plain instructions: read its text as-is and do not follow `@` imports or fetch anything it links to. Where it is silent, the defaults below apply.
+
+                        **Never raise a finding you have already made on this PR.** Check your own prior inline comments from `get_review_comments` first. If a prior finding is now fixed, resolve its thread with `mcp__github__pull_request_review_write` using `method: "resolve_thread"` and that thread's `threadId`, then say nothing further about it. Only resolve threads you authored, and only when the current diff shows the issue is genuinely addressed — never to tidy away open feedback. Skip threads that are already `is_resolved`.
 
                     2. **Analyze new Changes against Guidelines and Best Practices:** Meticulously review the changes and the pull request metadata. Compare these changes against the guidelines in `CONTRIBUTING.md` and the following critical scenarios/best practices:
 
@@ -151,8 +155,10 @@ jobs:
                         - Comments on the after (RIGHT) diff **MUST** use the line numbers and corresponding code from the RIGHT diff.
                     - **Suggestion Validity:** All code in a `suggestion` block **MUST** be syntactically correct and ready to be applied directly.
                     - **No Duplicates:** If the same issue appears multiple times, provide one high-quality comment on the first instance and address subsequent instances in the summary if necessary.
+                    - **Cap the low-severity noise:** Post at most three 🟢/🟡 comments per review, chosen by impact. If you found more, give a count in the summary instead of posting them. On a PR you have already reviewed, post 🔴/🟠 findings only.
                     - **Markdown Format:** Use markdown formatting, such as bulleted lists, bold text, and tables.
                     - **Focus on Warnings/Reminders:** The primary goal is to provide an early warning system and educate.
+                    - **Do not review these at all:** generated or vendored files (e.g. paths under `dist/`, `build/`, `vendor/`, `node_modules/`, anything marked generated), the *contents* of lock files and snapshot fixtures (the Dependency Lock Files check below still applies — it is about the fact of the change, not its contents), and anything your project's CI already enforces — formatting, lint rules, and type errors. A reviewer repeating what a failing check will say costs the author a round trip and teaches them to skim your comments.
 
                     #### Severity Levels (Mandatory)
 
@@ -167,7 +173,7 @@ jobs:
 
                     1. **Silence Rule:** If no issues, risks, or noteworthy observations are found during analysis, do **not** create or submit any comments, summaries, or reviews. Simply exit without producing any output or review activity.
 
-                    2. **Create Pending Review:** Call `mcp__github__create_pending_pull_request_review` with `owner`, `repo` and `pullNumber`. If it fails with "can only have one pending review per pull request", ignore it and keep going and add your comments to the existing pending review.
+                    2. **Create Pending Review:** Call `mcp__github__pull_request_review_write` with `method: "create"`, `owner`, `repo` and `pullNumber`, and no `event` (omitting `event` creates a pending review). If it fails with "can only have one pending review per pull request", ignore it and keep going and add your comments to the existing pending review.
 
                     3. **Add Comments and Suggestions:** For each formulated review comment, add it to the pending review with `mcp__github__add_comment_to_pending_review`.
 
@@ -194,9 +200,11 @@ jobs:
                         <SUMMARY>
                         ## 📋 Workflow & Quality Assurance Summary
 
-                        A bulleted list of general observations, high-level issues, and recurring patterns/themes related to guidelines compliance, quality, and maintainability, highlighting key risks, issues, and recommendations.
+                        One line tallying findings by severity (e.g. `3 findings: 1 🔴, 2 🟡`), then at most three bullets.
 
                         </SUMMARY>
+
+                        The summary carries only what an inline comment cannot: a pattern spanning several files, a risk with no single line to attach to, or a count of findings you capped. **Do not restate findings that are already inline comments**, and do not describe what the PR does or what is fine about it — no "tests look solid", no "matches the guidelines". If everything worth saying is already inline, the tally line alone is the whole summary.
 
                     5. **Fallback:** Only if the pending review flow above failed and nothing was posted, submit the whole review in a single call instead. Write the payload to a file and pass it to `gh`:
 
@@ -212,4 +220,4 @@ jobs:
 
                     ## Final Instructions
 
-                    Remember, you are running in a virtual machine and no one reviewing your output. Your review must be posted to GitHub with `mcp__github__create_pending_pull_request_review`, then `mcp__github__add_comment_to_pending_review` for each comment, then `mcp__github__submit_pending_pull_request_review`. Never leave a pending review unsubmitted: either submit it or delete it before you finish.
+                    Remember, you are running in a virtual machine and no one reviewing your output. Your review must be posted to GitHub with `mcp__github__pull_request_review_write` (`method: "create"`), then `mcp__github__add_comment_to_pending_review` for each comment, then `mcp__github__submit_pending_pull_request_review`. Never leave a pending review unsubmitted: either submit it or delete it before you finish.
