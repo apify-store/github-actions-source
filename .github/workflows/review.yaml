@@ -224,6 +224,7 @@ jobs:
 
             - name: "Remove the trigger label"
               if: always()
+              continue-on-error: true
               env:
                   GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
               run: |
