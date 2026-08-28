@@ -74,7 +74,7 @@ These workflows depend on https://github.com/apify-projects/apify-test-tools. Th
 
 ### Workflows
 - platform-tests - Scheduled (daily, hourly) tests on latest builds
-- pr-build-test - On PR updates, builds 0.99 versions and tests on them.
+- pr-build-test - On PR updates, builds 0.99 versions and tests on them. Also enforces that every PR updates `./CHANGELOG.md` unless the PR title starts with `chore`, `refactor`, `test`, `ci`, `build`, or `docs` (case-insensitive), or the PR carries the `internal` label.
 - push-build-latest - This releases master branch to latest Actor version. This almost always happens after PR is merged (since we forbid direct push)
 - claude - This makes claude being able to respond on github, this has several different triggers its capable to work with.
 

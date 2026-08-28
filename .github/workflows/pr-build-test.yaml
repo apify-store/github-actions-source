@@ -112,6 +112,46 @@ jobs:
                   additional-working-directory: ${{ inputs.additional-working-directory }}
                   npm-token: ${{ secrets.NPM_TOKEN }}
 
+            -   name: Check CHANGELOG.md updated
+                if: github.event_name == 'pull_request'
+                working-directory: ${{ inputs.working-directory }}
+                env:
+                    GH_TOKEN: ${{ github.token }}
+                    PR_NUMBER: ${{ github.event.pull_request.number }}
+                    BASE_REF: ${{ github.base_ref }}
+                    # Leading-word prefixes that exempt a PR from the changelog requirement (case-insensitive).
+                    EXCLUDED_PREFIXES: "chore refactor test ci build docs"
+                    SKIP_LABEL: "internal"
+                run: |
+                    set -euo pipefail
+
+                    # Fetch PR state fresh so that "Re-run failed jobs" after a label/title
+                    # edit sees the latest values (the cached github.event payload would not).
+                    pr_json=$(gh pr view "$PR_NUMBER" --json title,labels)
+                    title=$(echo "$pr_json" | jq -r '.title')
+                    labels=$(echo "$pr_json" | jq -r '.labels[].name')
+
+                    if echo "$labels" | grep -Fxq "$SKIP_LABEL"; then
+                        echo "PR has '$SKIP_LABEL' label - skipping CHANGELOG.md check."
+                        exit 0
+                    fi
+
+                    title_lower=$(echo "$title" | tr '[:upper:]' '[:lower:]')
+                    for prefix in $EXCLUDED_PREFIXES; do
+                        if [[ "$title_lower" == "$prefix"* ]]; then
+                            echo "PR title starts with '$prefix' - skipping CHANGELOG.md check."
+                            exit 0
+                        fi
+                    done
+
+                    if git diff --name-only "origin/$BASE_REF...HEAD" | grep -Fq "CHANGELOG.md"; then
+                        echo "CHANGELOG.md updated."
+                        exit 0
+                    fi
+
+                    echo "::error title=CHANGELOG.md not updated::This PR does not modify ./CHANGELOG.md. To resolve, do one of: (1) add an entry to CHANGELOG.md, (2) add the '${SKIP_LABEL}' label to this PR, or (3) prefix the PR title with one of: ${EXCLUDED_PREFIXES}. After any of these, re-run this failed job - no new commit required."
+                    exit 1
+
             -   name: TypeScript
                 # Some repos require custom build checks, so we check if the `build-check` script exists and run it if
                 # it does. Otherwise default to the standard `npx tsc --noEmit` check
