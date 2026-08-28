@@ -4,9 +4,14 @@ on:
     workflow_call:
         inputs:
             label:
-                default: claude-code-review
+                default: Ask claude review
                 type: string
-                description: Label to apply to the PR
+                description: Label that triggers a review. Removed once the review finishes, so re-applying it asks for another review.
+                required: false
+            reviewed-label:
+                default: claude reviewed
+                type: string
+                description: Label added after a successful review and never removed. Set to an empty string to disable.
                 required: false
             model:
                 default: sonnet
@@ -221,3 +226,25 @@ jobs:
                     ## Final Instructions
 
                     Remember, you are running in a virtual machine and no one reviewing your output. Your review must be posted to GitHub with `mcp__github__pull_request_review_write` (`method: "create"`), then `mcp__github__add_comment_to_pending_review` for each comment, then `mcp__github__submit_pending_pull_request_review`. Never leave a pending review unsubmitted: either submit it or delete it before you finish.
+
+            - name: "Remove the trigger label"
+              if: always()
+              continue-on-error: true
+              env:
+                  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+              run: |
+                  gh pr edit "${{ github.event.pull_request.number }}" \
+                    --repo "${{ github.repository }}" \
+                    --remove-label "${{ inputs.label }}"
+
+            - name: "Mark the PR as reviewed"
+              if: steps.review.outcome == 'success' && inputs.reviewed-label != ''
+              continue-on-error: true
+              env:
+                  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+              run: |
+                  gh label create "${{ inputs.reviewed-label }}" \
+                    --repo "${{ github.repository }}" --force
+                  gh pr edit "${{ github.event.pull_request.number }}" \
+                    --repo "${{ github.repository }}" \
+                    --add-label "${{ inputs.reviewed-label }}"
