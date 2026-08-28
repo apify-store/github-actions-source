@@ -14,7 +14,7 @@ job-wide environment variables, so a secret is only visible to the step that nee
 | --- | --- |
 | `NPM_TOKEN` | dependency install steps only, as both `NPM_TOKEN` and `NODE_AUTH_TOKEN`. Use a read-only token: npm granular tokens can be read-only, classic automation tokens can publish. |
 | the Actor tokens named by `tokenEnvVar` in `apify-test-tools.config.json` | the `build`, `release`, and `delete-old-builds` steps only |
-| `TESTER_APIFY_TOKEN` | the vitest step only |
+| `TESTER_APIFY_TOKEN` | the vitest step, and the Claude step of `platform-tests-claude-investigate-and-fix`, where it authenticates the Apify MCP server so the investigation can read the failing run |
 | `SLACK_TOKEN_TESTS_BOT` / `SLACK_TOKEN_RELEASES_BOT` | the reporting and release steps only |
 
 The Actor tokens are the one set that cannot be listed in the workflow, because each Actor names its
