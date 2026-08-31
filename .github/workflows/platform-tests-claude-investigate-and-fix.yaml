@@ -101,6 +101,8 @@ jobs:
                   # exposes. `runs` reads an Actor run — its status, exit code, storage ids and log —
                   # and lists an Actor's past runs. `storage` reads that run's dataset items and its
                   # key-value store keys and records, e.g. INPUT, OUTPUT and error snapshots.
+                  # WARN: with --dangerously-skip-permissions this is mostly declarative, because
+                  # Claude sees all tools the server exposes.
                   claude_args: |
                       --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=runs,storage","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN}"}}}}'
                       --model ${{ inputs.model }}
