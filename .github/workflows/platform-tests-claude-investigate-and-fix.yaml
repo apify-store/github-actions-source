@@ -98,13 +98,12 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   # The `tools` query parameter below selects which tools the Apify MCP server
-                  # exposes. `runs` reads an Actor run — its status, exit code, storage ids and log —
-                  # and lists an Actor's past runs. `storage` reads that run's dataset items and its
-                  # key-value store keys and records, e.g. INPUT, OUTPUT and error snapshots.
-                  # WARN: with --dangerously-skip-permissions this is mostly declarative, because
-                  # Claude sees all tools the server exposes.
+                  # exposes: reading an Actor run — its status, exit code, storage ids and log — and
+                  # reading that run's dataset items and its key-value store keys and records, e.g.
+                  # INPUT, OUTPUT and error snapshots. WARN: the server adds `abort-actor-run` on top
+                  # even when not listed here, see https://github.com/apify/apify-mcp-server
                   claude_args: |
-                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=runs,storage","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN}"}}}}'
+                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=get-actor-run,get-actor-log,get-dataset-list,get-dataset,get-dataset-items,get-key-value-store-list,get-key-value-store,get-key-value-store-keys,get-key-value-store-record","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN}"}}}}'
                       --model ${{ inputs.model }}
                       --dangerously-skip-permissions
 
