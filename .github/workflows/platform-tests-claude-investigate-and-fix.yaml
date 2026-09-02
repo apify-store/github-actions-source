@@ -39,11 +39,6 @@ on:
                 type: string
                 default: sonnet
                 description: Claude model to use for investigation and fix
-            failing_run_id:
-                required: false
-                type: string
-                default: ""
-                description: Workflow run to investigate. Defaults to the run this workflow is called from — set it only to investigate a past failure, e.g. when testing changes to this workflow.
             investigate_prompt:
                 required: false
                 type: string
@@ -92,7 +87,7 @@ jobs:
                   TESTER_APIFY_TOKEN: ${{ secrets.TESTER_APIFY_TOKEN }}
               with:
                   prompt: |
-                      The failing E2E platform test ran in workflow run ${{ inputs.failing_run_id || github.run_id }} of this repo.
+                      The failing E2E platform test ran in workflow run ${{ github.run_id }} of this repo.
 
                       ${{ inputs.investigate_prompt }}
                   github_token: ${{ secrets.GITHUB_TOKEN }}
