@@ -74,6 +74,8 @@ jobs:
                   PR_NUMBER: "${{ github.event.pull_request.number }}"
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  # So a silent review is visibly silent: the report lands in the step summary.
+                  display_report: true
                   # Do not set track_progress: it forces tag mode, which posts its own PR
                   # comment and duplicates the review into it.
                   claude_args: |
