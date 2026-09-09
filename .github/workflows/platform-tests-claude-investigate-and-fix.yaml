@@ -62,9 +62,9 @@ on:
             ANTHROPIC_API_KEY:
                 required: true
                 description: Claude API key
-            TESTER_APIFY_TOKEN:
+            TESTER_APIFY_TOKEN_READ_ONLY:
                 required: true
-                description: Apify token the tests run under. Lets the investigation read the failing run, its log and its storages.
+                description: Apify token used only for read-only investigation — reading the failing run, its log and its storages.
 
 jobs:
     investigate:
@@ -84,7 +84,7 @@ jobs:
               id: claude
               uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844 # v1.0.213
               env:
-                  TESTER_APIFY_TOKEN: ${{ secrets.TESTER_APIFY_TOKEN }}
+                  TESTER_APIFY_TOKEN_READ_ONLY: ${{ secrets.TESTER_APIFY_TOKEN_READ_ONLY }}
               with:
                   prompt: |
                       The failing E2E platform test ran in workflow run ${{ github.run_id }} of this repo.
@@ -98,7 +98,7 @@ jobs:
                   # INPUT, OUTPUT and error snapshots. WARN: the server adds `abort-actor-run` on top
                   # even when not listed here, see https://github.com/apify/apify-mcp-server
                   claude_args: |
-                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=get-actor-run,get-actor-log,get-dataset-list,get-dataset,get-dataset-items,get-key-value-store-list,get-key-value-store,get-key-value-store-keys,get-key-value-store-record","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN}"}}}}'
+                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=get-actor-run,get-actor-log,get-dataset-list,get-dataset,get-dataset-items,get-key-value-store-list,get-key-value-store,get-key-value-store-keys,get-key-value-store-record","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN_READ_ONLY}"}}}}'
                       --model ${{ inputs.model }}
                       --dangerously-skip-permissions
 
