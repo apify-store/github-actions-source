@@ -95,10 +95,12 @@ jobs:
                   # The `tools` query parameter below selects which tools the Apify MCP server
                   # exposes: reading an Actor run — its status, exit code, storage ids and log — and
                   # reading that run's dataset items and its key-value store keys and records, e.g.
-                  # INPUT, OUTPUT and error snapshots. WARN: the server adds `abort-actor-run` on top
-                  # even when not listed here, see https://github.com/apify/apify-mcp-server
+                  # INPUT, OUTPUT and error snapshots. The `docs` category adds searching and fetching
+                  # the Apify documentation, so the API semantics can be looked up rather than guessed.
+                  # WARN: the server adds `abort-actor-run` on top even when not listed here, see
+                  # https://github.com/apify/apify-mcp-server
                   claude_args: |
-                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=get-actor-run,get-actor-log,get-dataset-list,get-dataset,get-dataset-items,get-key-value-store-list,get-key-value-store,get-key-value-store-keys,get-key-value-store-record","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN_READ_ONLY}"}}}}'
+                      --mcp-config '{"mcpServers":{"apify":{"type":"http","url":"https://mcp.apify.com/?tools=get-actor-run,get-actor-log,get-dataset-list,get-dataset,get-dataset-items,get-key-value-store-list,get-key-value-store,get-key-value-store-keys,get-key-value-store-record,docs","headers":{"Authorization":"Bearer ${TESTER_APIFY_TOKEN_READ_ONLY}"}}}}'
                       --model ${{ inputs.model }}
                       --dangerously-skip-permissions
 
