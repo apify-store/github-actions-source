@@ -78,7 +78,7 @@ jobs:
             issue_number: ${{ steps.issue.outputs.number }}
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Claude Code
               id: claude
@@ -104,7 +104,7 @@ jobs:
 
             - name: Upload Claude output (for debugging)
               if: always()
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: claude-output-investigate
                   path: /home/runner/work/_temp/claude-execution-output.json
@@ -162,7 +162,7 @@ jobs:
             actions: read
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Run Claude Code
               id: claude
@@ -177,7 +177,7 @@ jobs:
 
             - name: Upload Claude output (for debugging)
               if: always()
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: claude-output-fix
                   path: /home/runner/work/_temp/claude-execution-output.json
