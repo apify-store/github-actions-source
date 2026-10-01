@@ -90,7 +90,8 @@ runs:
 
         # Repos can still have older version locally but on cloud we enforce uniformity.
         # This causes minor mismatch in package-lock.json and node_modules but it shouldn't cause any issues.
-        - name: Enforce latest test tools version
+        # Pinned to 0.9.0 instead of @latest: 0.10.0 broke backward compatibility with these workflows.
+        - name: Enforce pinned test tools version
           # We don't override beta so we can use it to test branch-specific versions of apify-test-tools
           # Needs the npm token too: a repo whose .npmrc routes all traffic through a private
           # registry has to authenticate even for public packages.
@@ -106,6 +107,6 @@ runs:
                 echo "Beta version detected, reinstalling $locked_version to ensure cache consistency"
                 npm install apify-test-tools@$locked_version --audit=false --no-fund;
               else
-                echo "Installing latest apify-test-tools"
-                npm install apify-test-tools@latest --audit=false --no-fund;
+                echo "Installing pinned apify-test-tools@0.9.0"
+                npm install apify-test-tools@0.9.0 --audit=false --no-fund;
               fi
